@@ -414,46 +414,53 @@ export default function ToolPage() {
 
   // ── EDITOR ─────────────────────────────────────────────────────────────────
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 64px)", overflow: "hidden", background: "#fff" }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 64px)", overflow: "hidden", background: "#f3f4f6" }}>
 
-      {/* ── HORIZONTAL TOOLBAR ──────────────────────────────────────────── */}
-      <div style={{ height: 52, flexShrink: 0, borderBottom: "1px solid #e5e7eb", display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center", padding: "0 16px", background: "#fff" }}>
+      {/* ── FLOATING PILL TOOLBAR (centered, remove.bg style) ───────────── */}
+      <div style={{ flexShrink: 0, display: "flex", justifyContent: "center", padding: "10px 16px 8px" }}>
+        <div style={{ display: "inline-flex", alignItems: "center", gap: 1, padding: "4px 5px", borderRadius: 999, background: "#fff", border: "1px solid #e5e7eb", boxShadow: "0 1px 6px rgba(0,0,0,.07)", overflow: "hidden" }}>
 
-        {/* LEFT — New Image */}
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          {/* New Image */}
           <button onClick={pick}
-            style={{ display: "flex", alignItems: "center", gap: 5, padding: "5px 12px", borderRadius: 8, border: "1.5px solid #e5e7eb", background: "transparent", color: "#6b7280", fontWeight: 600, fontSize: 12, cursor: "pointer", whiteSpace: "nowrap" }}>
+            style={{ display: "flex", alignItems: "center", gap: 5, padding: "6px 12px", borderRadius: 999, border: "none", background: "transparent", color: "#374151", fontWeight: 600, fontSize: 12, cursor: "pointer", whiteSpace: "nowrap", transition: "background .15s" }}
+            onMouseEnter={e => (e.currentTarget.style.background = "#f3f4f6")}
+            onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
             <Plus size={13} /> New Image
           </button>
-        </div>
 
-        {/* CENTER — Tab buttons */}
-        <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
+          <div style={{ width: 1, height: 22, background: "#e5e7eb", flexShrink: 0, margin: "0 3px" }} />
+
+          {/* Tab buttons — rounded-full, dark when active */}
           {TABS.map(({ id, label, Icon }) => {
             const on = tab === id;
             return (
               <button key={id} onClick={() => setTab(on ? null : id)}
-                style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", borderRadius: 8, border: "none", cursor: "pointer", background: on ? "#f5f3ff" : "transparent", color: on ? "#6d28d9" : "#6b7280", fontWeight: on ? 700 : 500, fontSize: 13, transition: "all .15s", whiteSpace: "nowrap" }}>
-                <Icon size={14} color={on ? "#7c3aed" : "#9ca3af"} /> {label}
+                style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 14px", borderRadius: 999, border: "none", cursor: "pointer", background: on ? "#111827" : "transparent", color: on ? "#fff" : "#6b7280", fontWeight: on ? 600 : 500, fontSize: 13, transition: "all .15s", whiteSpace: "nowrap" }}
+                onMouseEnter={e => { if (!on) e.currentTarget.style.background = "#f3f4f6"; }}
+                onMouseLeave={e => { if (!on) e.currentTarget.style.background = "transparent"; }}>
+                <Icon size={14} color={on ? "#fff" : "#9ca3af"} /> {label}
               </button>
             );
           })}
-        </div>
 
-        {/* RIGHT — Undo / Redo / Credits / Download */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 4 }}>
+          <div style={{ width: 1, height: 22, background: "#e5e7eb", flexShrink: 0, margin: "0 3px" }} />
+
+          {/* Undo / Redo */}
           {[{ fn: () => active && undo(active.id), Icon: Undo2, off: !active?.undoStack.length, title: "Undo" },
             { fn: () => active && redo(active.id), Icon: Redo2, off: !active?.redoStack.length, title: "Redo" }].map(({ fn, Icon, off, title }) => (
             <button key={title} onClick={fn} disabled={off} title={title}
-              style={{ width: 32, height: 32, borderRadius: 8, border: "none", background: "transparent", cursor: off ? "not-allowed" : "pointer", opacity: off ? 0.3 : 1, display: "flex", alignItems: "center", justifyContent: "center", color: "#6b7280" }}>
+              style={{ width: 34, height: 34, borderRadius: 999, border: "none", background: "transparent", cursor: off ? "not-allowed" : "pointer", opacity: off ? 0.3 : 1, display: "flex", alignItems: "center", justifyContent: "center", color: "#6b7280", transition: "background .15s" }}
+              onMouseEnter={e => { if (!off) (e.currentTarget as HTMLElement).style.background = "#f3f4f6"; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}>
               <Icon size={15} />
             </button>
           ))}
 
-          <div style={{ width: 1, height: 20, background: "#e5e7eb", margin: "0 4px" }} />
+          <div style={{ width: 1, height: 22, background: "#e5e7eb", flexShrink: 0, margin: "0 3px" }} />
 
+          {/* Credits badge */}
           {session && (
-            <div style={{ display: "flex", alignItems: "center", gap: 5, background: "#f5f3ff", border: "1px solid #ddd6fe", borderRadius: 99, padding: "4px 10px", fontSize: 12, fontWeight: 700, color: "#6d28d9", flexShrink: 0, marginRight: 2 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 4, background: "#f5f3ff", borderRadius: 999, padding: "4px 10px", fontSize: 12, fontWeight: 700, color: "#6d28d9", flexShrink: 0, marginRight: 2 }}>
               <Zap size={11} fill="currentColor" /> {credits}
             </div>
           )}
@@ -461,60 +468,60 @@ export default function ToolPage() {
           {/* Download dropdown */}
           <div style={{ position: "relative", flexShrink: 0 }} ref={dlRef}>
             <button onClick={() => setDlOpen(o => !o)}
-              style={{ display: "flex", alignItems: "center", gap: 7, background: "#2563eb", color: "#fff", fontWeight: 700, fontSize: 13, padding: "0 18px", height: 36, borderRadius: 99, border: "none", cursor: "pointer", boxShadow: "0 2px 12px rgba(37,99,235,.35)" }}>
+              style={{ display: "flex", alignItems: "center", gap: 6, background: "#111827", color: "#fff", fontWeight: 600, fontSize: 13, padding: "7px 16px", borderRadius: 999, border: "none", cursor: "pointer" }}>
               <Download size={14} /> Download
               <ChevronDown size={12} style={{ transition: "transform .15s", transform: dlOpen ? "rotate(180deg)" : "none" }} />
             </button>
-
-          {dlOpen && (
-            <div style={{ position: "absolute", right: 0, top: "calc(100% + 8px)", width: 240, background: "#fff", border: "1px solid #e5e7eb", borderRadius: 16, boxShadow: "0 16px 48px rgba(0,0,0,.13)", zIndex: 9999, overflow: "hidden" }}>
-              <button onClick={() => { dlFree(); setDlOpen(false); }} disabled={active?.stage !== "done"}
-                style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "12px 16px", border: "none", borderBottom: "1px solid #f3f4f6", background: "transparent", cursor: active?.stage === "done" ? "pointer" : "not-allowed", opacity: active?.stage === "done" ? 1 : 0.4 }}
-                onMouseEnter={e => (e.currentTarget.style.background = "#f9fafb")}
-                onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
-                <div style={{ width: 34, height: 34, borderRadius: 10, background: "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Download size={15} color="#6b7280" /></div>
-                <div style={{ textAlign: "left" }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: "#111827" }}>Free PNG</div>
-                  <div style={{ fontSize: 11, color: "#9ca3af" }}>Optimised · No watermark</div>
-                </div>
-              </button>
-              {!session ? (
-                <Link href="/auth/signup" onClick={() => setDlOpen(false)} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", textDecoration: "none" }}
-                  onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => (e.currentTarget.style.background = "#faf5ff")}
-                  onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => (e.currentTarget.style.background = "transparent")}>
-                  <div style={{ width: 34, height: 34, borderRadius: 10, background: "#f5f3ff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Lock size={15} color="#7c3aed" /></div>
-                  <div><div style={{ fontSize: 13, fontWeight: 700, color: "#6d28d9" }}>Sign Up for HD</div><div style={{ fontSize: 11, color: "#a78bfa" }}>3 free HD/day · No card</div></div>
-                </Link>
-              ) : credits > 0 ? (
-                <button onClick={() => { dlHD(); setDlOpen(false); }} disabled={hdLoad || active?.stage !== "done"}
-                  style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "12px 16px", border: "none", background: "transparent", cursor: "pointer" }}
-                  onMouseEnter={e => (e.currentTarget.style.background = "#faf5ff")}
+            {dlOpen && (
+              <div style={{ position: "absolute", right: 0, top: "calc(100% + 8px)", width: 240, background: "#fff", border: "1px solid #e5e7eb", borderRadius: 16, boxShadow: "0 16px 48px rgba(0,0,0,.13)", zIndex: 9999, overflow: "hidden" }}>
+                <button onClick={() => { dlFree(); setDlOpen(false); }} disabled={active?.stage !== "done"}
+                  style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "12px 16px", border: "none", borderBottom: "1px solid #f3f4f6", background: "transparent", cursor: active?.stage === "done" ? "pointer" : "not-allowed", opacity: active?.stage === "done" ? 1 : 0.4 }}
+                  onMouseEnter={e => (e.currentTarget.style.background = "#f9fafb")}
                   onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
-                  <div style={{ width: 34, height: 34, borderRadius: 10, background: "#f5f3ff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                    {hdLoad ? <Loader2 size={15} color="#7c3aed" className="animate-spin" /> : <Zap size={15} color="#7c3aed" />}
+                  <div style={{ width: 34, height: 34, borderRadius: 10, background: "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Download size={15} color="#6b7280" /></div>
+                  <div style={{ textAlign: "left" }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: "#111827" }}>Free PNG</div>
+                    <div style={{ fontSize: 11, color: "#9ca3af" }}>Optimised · No watermark</div>
                   </div>
-                  <div style={{ textAlign: "left" }}><div style={{ fontSize: 13, fontWeight: 700, color: "#6d28d9" }}>HD Download</div><div style={{ fontSize: 11, color: "#a78bfa" }}>Full resolution · 1 credit</div></div>
                 </button>
-              ) : (
-                <Link href="/pricing" onClick={() => setDlOpen(false)} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", textDecoration: "none" }}
-                  onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => (e.currentTarget.style.background = "#faf5ff")}
-                  onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => (e.currentTarget.style.background = "transparent")}>
-                  <div style={{ width: 34, height: 34, borderRadius: 10, background: "#f5f3ff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Zap size={15} color="#7c3aed" /></div>
-                  <div><div style={{ fontSize: 13, fontWeight: 700, color: "#6d28d9" }}>Buy Credits</div><div style={{ fontSize: 11, color: "#a78bfa" }}>Unlock HD downloads</div></div>
-                </Link>
-              )}
-              {doneCount > 1 && (
-                <button onClick={() => { dlZip(); setDlOpen(false); }}
-                  style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "12px 16px", border: "none", borderTop: "1px solid #f3f4f6", background: "transparent", cursor: "pointer" }}
-                  onMouseEnter={e => (e.currentTarget.style.background = "#f0fdf4")}
-                  onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
-                  <div style={{ width: 34, height: 34, borderRadius: 10, background: "#f0fdf4", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Download size={15} color="#16a34a" /></div>
-                  <div style={{ textAlign: "left" }}><div style={{ fontSize: 13, fontWeight: 700, color: "#15803d" }}>Download All ZIP</div><div style={{ fontSize: 11, color: "#4ade80" }}>{doneCount} images ready</div></div>
-                </button>
-              )}
-            </div>
-          )}
+                {!session ? (
+                  <Link href="/auth/signup" onClick={() => setDlOpen(false)} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", textDecoration: "none" }}
+                    onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => (e.currentTarget.style.background = "#faf5ff")}
+                    onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => (e.currentTarget.style.background = "transparent")}>
+                    <div style={{ width: 34, height: 34, borderRadius: 10, background: "#f5f3ff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Lock size={15} color="#7c3aed" /></div>
+                    <div><div style={{ fontSize: 13, fontWeight: 700, color: "#6d28d9" }}>Sign Up for HD</div><div style={{ fontSize: 11, color: "#a78bfa" }}>3 free HD/day · No card</div></div>
+                  </Link>
+                ) : credits > 0 ? (
+                  <button onClick={() => { dlHD(); setDlOpen(false); }} disabled={hdLoad || active?.stage !== "done"}
+                    style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "12px 16px", border: "none", background: "transparent", cursor: "pointer" }}
+                    onMouseEnter={e => (e.currentTarget.style.background = "#faf5ff")}
+                    onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                    <div style={{ width: 34, height: 34, borderRadius: 10, background: "#f5f3ff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      {hdLoad ? <Loader2 size={15} color="#7c3aed" className="animate-spin" /> : <Zap size={15} color="#7c3aed" />}
+                    </div>
+                    <div style={{ textAlign: "left" }}><div style={{ fontSize: 13, fontWeight: 700, color: "#6d28d9" }}>HD Download</div><div style={{ fontSize: 11, color: "#a78bfa" }}>Full resolution · 1 credit</div></div>
+                  </button>
+                ) : (
+                  <Link href="/pricing" onClick={() => setDlOpen(false)} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", textDecoration: "none" }}
+                    onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => (e.currentTarget.style.background = "#faf5ff")}
+                    onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => (e.currentTarget.style.background = "transparent")}>
+                    <div style={{ width: 34, height: 34, borderRadius: 10, background: "#f5f3ff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Zap size={15} color="#7c3aed" /></div>
+                    <div><div style={{ fontSize: 13, fontWeight: 700, color: "#6d28d9" }}>Buy Credits</div><div style={{ fontSize: 11, color: "#a78bfa" }}>Unlock HD downloads</div></div>
+                  </Link>
+                )}
+                {doneCount > 1 && (
+                  <button onClick={() => { dlZip(); setDlOpen(false); }}
+                    style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "12px 16px", border: "none", borderTop: "1px solid #f3f4f6", background: "transparent", cursor: "pointer" }}
+                    onMouseEnter={e => (e.currentTarget.style.background = "#f0fdf4")}
+                    onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                    <div style={{ width: 34, height: 34, borderRadius: 10, background: "#f0fdf4", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Download size={15} color="#16a34a" /></div>
+                    <div style={{ textAlign: "left" }}><div style={{ fontSize: 13, fontWeight: 700, color: "#15803d" }}>Download All ZIP</div><div style={{ fontSize: 11, color: "#4ade80" }}>{doneCount} images ready</div></div>
+                  </button>
+                )}
+              </div>
+            )}
           </div>
+
         </div>
       </div>
 
@@ -788,40 +795,43 @@ export default function ToolPage() {
         )}
       </div>
 
-      {/* ── THUMBNAIL STRIP ─────────────────────────────────────────────── */}
-      <div style={{ height: 72, flexShrink: 0, background: "#fff", borderTop: "1px solid #e5e7eb", display: "flex", alignItems: "center", padding: "0 16px", gap: 10, overflowX: "auto" }}>
-        {imgs.map(item => (
-          <div key={item.id} onClick={() => setAid(item.id)}
-            className="group"
-            style={{ position: "relative", width: 48, height: 48, borderRadius: 10, overflow: "visible", flexShrink: 0, cursor: "pointer", border: aid === item.id ? "2.5px solid #2563eb" : "1.5px solid #e5e7eb", boxShadow: aid === item.id ? "0 0 0 3px #bfdbfe" : undefined, transition: "all .15s" }}>
-            <div style={{ width: "100%", height: "100%", borderRadius: 8, overflow: "hidden" }}>
-              {item.stage === "done" && item.resultUrl ? (
-                <div className="checker" style={{ width: "100%", height: "100%", position: "relative" }}>
-                  <img src={item.resultUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "contain", position: "relative" }} />
-                </div>
-              ) : item.stage === "processing" ? (
-                <div style={{ width: "100%", height: "100%", background: "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <Loader2 size={14} color="#2563eb" className="animate-spin" />
-                </div>
-              ) : (
-                <img src={item.origUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-              )}
-            </div>
-            <button
-              onClick={e => { e.stopPropagation(); removeImg(item.id); }}
-              className="opacity-0 group-hover:opacity-100 transition-opacity"
-              style={{ position: "absolute", top: -5, right: -5, width: 17, height: 17, borderRadius: "50%", background: "#1f2937", border: "2px solid #fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 10 }}>
-              <X size={7} color="#fff" />
-            </button>
-          </div>
-        ))}
+      {/* ── THUMBNAIL STRIP (remove.bg style — centered row) ────────────── */}
+      <div style={{ flexShrink: 0, padding: "10px 16px 12px", display: "flex", justifyContent: "center" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, overflowX: "auto", maxWidth: "calc(100vw - 32px)" }}>
+          {/* + upload button */}
+          <button onClick={pick}
+            style={{ width: 52, height: 52, borderRadius: 14, border: "2px dashed #d1d5db", background: "transparent", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0, transition: "all .15s" }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "#374151"; (e.currentTarget as HTMLElement).style.background = "#f9fafb"; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "#d1d5db"; (e.currentTarget as HTMLElement).style.background = "transparent"; }}>
+            <Plus size={20} color="#9ca3af" />
+          </button>
 
-        <button onClick={pick}
-          style={{ width: 48, height: 48, borderRadius: 10, border: "1.5px dashed #d1d5db", background: "transparent", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0, transition: "all .15s" }}
-          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "#2563eb"; (e.currentTarget as HTMLElement).style.background = "#eff6ff"; }}
-          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "#d1d5db"; (e.currentTarget as HTMLElement).style.background = "transparent"; }}>
-          <Plus size={18} color="#9ca3af" />
-        </button>
+          {imgs.map(item => (
+            <div key={item.id} onClick={() => setAid(item.id)}
+              className="group"
+              style={{ position: "relative", width: 52, height: 52, borderRadius: 14, overflow: "visible", flexShrink: 0, cursor: "pointer", outline: aid === item.id ? "2.5px solid #111827" : "2px solid transparent", outlineOffset: 2, transition: "outline .15s" }}>
+              <div style={{ width: "100%", height: "100%", borderRadius: 12, overflow: "hidden", background: "#e5e7eb" }}>
+                {item.stage === "done" && item.resultUrl ? (
+                  <div className="checker" style={{ width: "100%", height: "100%", position: "relative" }}>
+                    <img src={item.resultUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "contain", position: "relative" }} />
+                  </div>
+                ) : item.stage === "processing" ? (
+                  <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <Loader2 size={16} color="#374151" className="animate-spin" />
+                  </div>
+                ) : (
+                  <img src={item.origUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                )}
+              </div>
+              <button
+                onClick={e => { e.stopPropagation(); removeImg(item.id); }}
+                className="opacity-0 group-hover:opacity-100 transition-opacity"
+                style={{ position: "absolute", top: -4, right: -4, width: 18, height: 18, borderRadius: "50%", background: "#111827", border: "2px solid #f3f4f6", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 10 }}>
+                <X size={8} color="#fff" />
+              </button>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
