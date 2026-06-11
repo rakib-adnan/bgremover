@@ -3,18 +3,18 @@ import { Zap } from "lucide-react";
 
 export default function Footer() {
   return (
-    <footer className="bg-[#060610] border-t border-white/10 text-gray-500 py-14">
+    <footer className="bg-gray-900 text-gray-400 py-14">
       <div className="max-w-6xl mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-10">
           <div>
             <div className="flex items-center gap-2 text-white font-black text-lg mb-4">
-              <div className="w-7 h-7 bg-gradient-to-br from-violet-600 to-blue-500 rounded-lg flex items-center justify-center">
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "linear-gradient(135deg,#7c3aed,#3b82f6)" }}>
                 <Zap size={14} className="text-white" fill="currentColor" />
               </div>
               BG Remover
             </div>
-            <p className="text-sm leading-relaxed text-gray-500">
-              Free AI-powered background removal. Your images are processed locally — never stored on our servers.
+            <p className="text-sm leading-relaxed">
+              Free AI background removal. Preview images stay private — processed entirely in your browser.
             </p>
           </div>
           <div>
@@ -42,7 +42,7 @@ export default function Footer() {
         </div>
         <div className="border-t border-white/10 pt-6 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-gray-600">
           <p>© {new Date().getFullYear()} BG Remover. All rights reserved.</p>
-          <p className="text-green-500/80 font-medium">🔒 Privacy-first — images processed in your browser, never uploaded</p>
+          <p className="text-emerald-500 font-medium">🔒 Privacy-first — free previews never leave your browser</p>
         </div>
       </div>
     </footer>
