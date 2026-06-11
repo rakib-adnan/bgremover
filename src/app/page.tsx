@@ -1,55 +1,132 @@
 import Link from "next/link";
-import { Upload, Wand2, Download, Shield, Zap, Star, ChevronRight, Check } from "lucide-react";
+import { ArrowRight, Check, Zap, Shield, Star, Clock } from "lucide-react";
 
 export default function HomePage() {
   return (
-    <div>
+    <div className="bg-white">
+
       {/* Hero */}
-      <section className="relative bg-gradient-to-br from-violet-50 via-white to-blue-50 py-24 px-4">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 bg-violet-100 text-violet-700 px-4 py-1.5 rounded-full text-sm font-medium mb-6">
-            <Zap size={14} /> AI-Powered · Free · Instant
+      <section className="pt-20 pb-16 px-4 bg-gradient-to-b from-slate-50 to-white">
+        <div className="max-w-5xl mx-auto text-center">
+          <div className="inline-flex items-center gap-2 bg-violet-100 text-violet-700 px-4 py-1.5 rounded-full text-sm font-semibold mb-8">
+            <Zap size={13} fill="currentColor" /> 100% Free — No Sign Up Required
           </div>
-          <h1 className="text-5xl md:text-6xl font-bold text-gray-900 leading-tight mb-6">
-            Remove Image Background<br />
-            <span className="bg-gradient-to-r from-violet-600 to-blue-500 bg-clip-text text-transparent">
-              Free & Instantly
-            </span>
+          <h1 className="text-5xl md:text-7xl font-black text-gray-900 leading-[1.05] tracking-tight mb-6">
+            Remove Image<br />
+            <span className="text-violet-600">Background</span> Free
           </h1>
-          <p className="text-xl text-gray-600 mb-10 max-w-2xl mx-auto leading-relaxed">
-            Upload any image and our AI removes the background in seconds.
-            Get 3 free HD downloads daily. No watermarks. No credit card needed.
+          <p className="text-xl text-gray-500 mb-10 max-w-xl mx-auto">
+            Upload a photo and get a transparent background instantly. No watermarks. No limits. 100% free.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/tool" className="bg-gradient-to-r from-violet-600 to-blue-500 text-white px-8 py-4 rounded-xl font-semibold text-lg hover:opacity-90 transition flex items-center justify-center gap-2 shadow-lg shadow-violet-200">
-              <Upload size={20} /> Upload Image Free
-            </Link>
-            <Link href="/pricing" className="bg-white text-gray-700 px-8 py-4 rounded-xl font-semibold text-lg hover:bg-gray-50 transition flex items-center justify-center gap-2 border border-gray-200">
-              View Pricing <ChevronRight size={18} />
-            </Link>
+
+          {/* Upload CTA */}
+          <Link href="/tool"
+            className="inline-flex items-center gap-3 bg-violet-600 hover:bg-violet-700 text-white text-lg font-bold px-10 py-5 rounded-2xl transition-all shadow-xl shadow-violet-200 hover:shadow-violet-300 hover:scale-[1.02]">
+            Upload Image — It&apos;s Free
+            <ArrowRight size={20} />
+          </Link>
+
+          <div className="flex flex-wrap justify-center gap-6 mt-8 text-sm text-gray-400">
+            <span className="flex items-center gap-1.5"><Check size={14} className="text-green-500" /> No sign up needed</span>
+            <span className="flex items-center gap-1.5"><Check size={14} className="text-green-500" /> Unlimited free downloads</span>
+            <span className="flex items-center gap-1.5"><Check size={14} className="text-green-500" /> No watermarks ever</span>
           </div>
-          <p className="text-sm text-gray-500 mt-4">✓ 3 free HD images/day &nbsp; ✓ No watermarks &nbsp; ✓ No signup for preview</p>
         </div>
       </section>
 
-      {/* How It Works */}
-      <section id="how-it-works" className="py-20 px-4 bg-gray-50">
+      {/* Before/After visual */}
+      <section className="py-16 px-4 bg-white">
+        <div className="max-w-4xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 rounded-3xl overflow-hidden shadow-2xl shadow-gray-200">
+            <div className="bg-gray-100 aspect-square flex items-center justify-center relative">
+              <div className="absolute top-3 left-3 bg-black/50 text-white text-xs font-bold px-3 py-1 rounded-full">BEFORE</div>
+              <div className="w-32 h-40 bg-gradient-to-br from-gray-300 to-gray-400 rounded-2xl" />
+            </div>
+            <div className="aspect-square flex items-center justify-center relative" style={{background:"url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20'%3E%3Crect width='10' height='10' fill='%23e5e7eb'/%3E%3Crect x='10' y='10' width='10' height='10' fill='%23e5e7eb'/%3E%3Crect x='10' y='0' width='10' height='10' fill='%23fff'/%3E%3Crect x='0' y='10' width='10' height='10' fill='%23fff'/%3E%3C/svg%3E\")"}}>
+              <div className="absolute top-3 left-3 bg-black/50 text-white text-xs font-bold px-3 py-1 rounded-full">AFTER</div>
+              <div className="w-32 h-40 bg-gradient-to-br from-violet-400 to-violet-600 rounded-2xl opacity-80" />
+            </div>
+          </div>
+          <p className="text-center text-gray-400 text-sm mt-4">Background removed in under 3 seconds</p>
+        </div>
+      </section>
+
+      {/* Free vs Signed In */}
+      <section className="py-20 px-4 bg-slate-50">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-3xl font-black text-gray-900 text-center mb-3">What You Get</h2>
+          <p className="text-gray-500 text-center mb-12">Free for everyone. Even better when signed in.</p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Free */}
+            <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm">
+              <div className="text-2xl font-black text-gray-900 mb-1">Free</div>
+              <div className="text-gray-400 text-sm mb-6">No account needed</div>
+              <ul className="space-y-3">
+                {[
+                  "Unlimited background removal",
+                  "Instant preview download",
+                  "No watermarks",
+                  "JPG, PNG, WEBP support",
+                  "No sign up ever",
+                ].map(f => (
+                  <li key={f} className="flex items-center gap-3 text-sm text-gray-600">
+                    <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <Check size={11} className="text-green-600" />
+                    </div>
+                    {f}
+                  </li>
+                ))}
+              </ul>
+              <Link href="/tool" className="mt-6 block w-full text-center bg-gray-900 text-white py-3 rounded-xl font-bold hover:bg-gray-800 transition">
+                Start Free
+              </Link>
+            </div>
+
+            {/* Signed In */}
+            <div className="bg-violet-600 rounded-3xl p-8 text-white relative overflow-hidden">
+              <div className="absolute top-4 right-4 bg-yellow-400 text-yellow-900 text-xs font-black px-3 py-1 rounded-full">BEST</div>
+              <div className="text-2xl font-black mb-1">Sign In Free</div>
+              <div className="text-violet-200 text-sm mb-6">Free account · 3 HD/day</div>
+              <ul className="space-y-3">
+                {[
+                  "Everything in Free",
+                  "3 full HD downloads daily",
+                  "Full resolution PNG",
+                  "Credits never expire",
+                  "Download history",
+                ].map(f => (
+                  <li key={f} className="flex items-center gap-3 text-sm text-violet-100">
+                    <div className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
+                      <Check size={11} className="text-white" />
+                    </div>
+                    {f}
+                  </li>
+                ))}
+              </ul>
+              <Link href="/auth/signup" className="mt-6 block w-full text-center bg-white text-violet-600 py-3 rounded-xl font-black hover:bg-violet-50 transition">
+                Create Free Account
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* How it works */}
+      <section className="py-20 px-4 bg-white">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">How It Works</h2>
-          <p className="text-gray-500 mb-12">Three simple steps to a perfect cutout</p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <h2 className="text-3xl font-black text-gray-900 mb-3">How It Works</h2>
+          <p className="text-gray-500 mb-12">Three steps. Five seconds.</p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
-              { icon: Upload, step: "1", title: "Upload Image", desc: "Drag & drop or click to upload any JPG, PNG, or WEBP image." },
-              { icon: Wand2, step: "2", title: "AI Removes Background", desc: "Our AI instantly detects and removes the background with precision." },
-              { icon: Download, step: "3", title: "Download Result", desc: "Download free preview or use credits for full HD transparent PNG." },
-            ].map(({ icon: Icon, step, title, desc }) => (
-              <div key={step} className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 relative">
-                <div className="w-12 h-12 bg-gradient-to-br from-violet-600 to-blue-500 rounded-xl flex items-center justify-center mb-4 mx-auto">
-                  <Icon size={22} className="text-white" />
-                </div>
-                <div className="absolute top-4 right-4 w-7 h-7 bg-violet-100 text-violet-600 rounded-full flex items-center justify-center text-xs font-bold">{step}</div>
-                <h3 className="font-semibold text-gray-900 text-lg mb-2">{title}</h3>
-                <p className="text-gray-500 text-sm leading-relaxed">{desc}</p>
+              { n: "1", title: "Upload", desc: "Drag & drop or click to upload any image", color: "bg-violet-100 text-violet-600" },
+              { n: "2", title: "Process", desc: "AI removes the background instantly", color: "bg-blue-100 text-blue-600" },
+              { n: "3", title: "Download", desc: "Save your transparent PNG for free", color: "bg-green-100 text-green-600" },
+            ].map(s => (
+              <div key={s.n} className="text-center">
+                <div className={`w-14 h-14 ${s.color} rounded-2xl flex items-center justify-center text-2xl font-black mx-auto mb-4`}>{s.n}</div>
+                <h3 className="font-bold text-gray-900 text-lg mb-1">{s.title}</h3>
+                <p className="text-gray-500 text-sm">{s.desc}</p>
               </div>
             ))}
           </div>
@@ -57,68 +134,37 @@ export default function HomePage() {
       </section>
 
       {/* Features */}
-      <section className="py-20 px-4 bg-white">
+      <section className="py-20 px-4 bg-slate-50">
         <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Why Choose BG Remover?</h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <h2 className="text-3xl font-black text-gray-900 text-center mb-12">Why BG Remover?</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
-              { icon: Shield, title: "100% Private", desc: "Previews processed in your browser. HD images processed securely and never stored." },
-              { icon: Zap, title: "Lightning Fast", desc: "AI removes backgrounds in under 5 seconds. No waiting, no queues." },
-              { icon: Star, title: "HD Quality", desc: "Full resolution PNG with transparent background. Perfect for professional use." },
-              { icon: Check, title: "No Watermarks", desc: "Even free downloads come watermark-free. Clean, professional results always." },
-              { icon: Upload, title: "Any Image Type", desc: "Supports JPG, PNG, WEBP and more. Works with people, products, pets and objects." },
-              { icon: Download, title: "Credits Never Expire", desc: "Buy once, use anytime. Your credits roll over and never expire." },
-            ].map(({ icon: Icon, title, desc }) => (
-              <div key={title} className="flex gap-4 p-6 rounded-xl bg-gray-50 border border-gray-100">
-                <div className="w-10 h-10 bg-violet-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Icon size={18} className="text-violet-600" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-1">{title}</h3>
-                  <p className="text-gray-500 text-sm leading-relaxed">{desc}</p>
-                </div>
+              { icon: Zap, label: "Instant", desc: "Under 5 seconds" },
+              { icon: Shield, label: "Private", desc: "Stays in your browser" },
+              { icon: Star, label: "HD Quality", desc: "Full resolution output" },
+              { icon: Clock, label: "Always Free", desc: "No hidden charges" },
+            ].map(({ icon: Icon, label, desc }) => (
+              <div key={label} className="bg-white rounded-2xl p-6 text-center border border-gray-100 shadow-sm">
+                <Icon size={24} className="text-violet-600 mx-auto mb-3" />
+                <div className="font-bold text-gray-900 mb-1">{label}</div>
+                <div className="text-gray-400 text-xs">{desc}</div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Pricing Banner */}
-      <section className="py-20 px-4 bg-gradient-to-br from-violet-600 to-blue-600 text-white">
-        <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-3xl font-bold mb-4">Simple, Transparent Pricing</h2>
-          <p className="text-violet-100 mb-8">Start free. Pay only for what you use. Credits never expire.</p>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            {[
-              { label: "Free", sub: "3 HD/day", price: "$0" },
-              { label: "10 credits", sub: "10 images", price: "$1.00" },
-              { label: "50 credits", sub: "50 images", price: "$4.50" },
-              { label: "100 credits", sub: "100 images", price: "$8.00" },
-            ].map((p) => (
-              <div key={p.label} className="bg-white/15 backdrop-blur rounded-xl p-4 border border-white/20">
-                <div className="text-2xl font-bold">{p.price}</div>
-                <div className="text-violet-100 text-sm">{p.sub}</div>
-              </div>
-            ))}
-          </div>
-          <Link href="/pricing" className="bg-white text-violet-600 px-8 py-3 rounded-xl font-semibold hover:bg-violet-50 transition inline-flex items-center gap-2">
-            View All Plans <ChevronRight size={18} />
-          </Link>
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="py-20 px-4 bg-white text-center">
+      {/* Final CTA */}
+      <section className="py-24 px-4 bg-gray-900 text-white text-center">
         <div className="max-w-2xl mx-auto">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">Ready to Remove Backgrounds?</h2>
-          <p className="text-gray-500 mb-8">No signup needed. Start for free right now.</p>
-          <Link href="/tool" className="bg-gradient-to-r from-violet-600 to-blue-500 text-white px-10 py-4 rounded-xl font-semibold text-lg hover:opacity-90 transition shadow-lg shadow-violet-200 inline-flex items-center gap-2">
-            <Upload size={20} /> Try It Free Now
+          <h2 className="text-4xl font-black mb-4">Remove a background right now</h2>
+          <p className="text-gray-400 mb-8">No account. No payment. Just upload and download.</p>
+          <Link href="/tool" className="inline-flex items-center gap-3 bg-violet-600 hover:bg-violet-500 text-white font-bold text-lg px-10 py-5 rounded-2xl transition">
+            Try It Free <ArrowRight size={20} />
           </Link>
         </div>
       </section>
+
     </div>
   );
 }
