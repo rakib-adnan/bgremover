@@ -22,9 +22,13 @@ interface IDBEntry {
 }
 function openIDB(): Promise<IDBDatabase> {
   return new Promise((ok, err) => {
-    const r = indexedDB.open(IDB_NAME, 1);
-    r.onupgradeneeded = () => r.result.createObjectStore(IDB_STORE, { keyPath: "id" });
-    r.onsuccess = () => ok(r.result); r.onerror = () => err(r.error);
+    try {
+      const r = indexedDB.open(IDB_NAME, 1);
+      r.onupgradeneeded = () => r.result.createObjectStore(IDB_STORE, { keyPath: "id" });
+      r.onsuccess = () => ok(r.result);
+      r.onerror = () => err(r.error);
+      r.onblocked = () => err(new Error("idb-blocked"));
+    } catch (e) { err(e); }
   });
 }
 async function idbSave(e: IDBEntry) {
@@ -134,6 +138,7 @@ export default function ToolPage() {
   const [bgSubTab, setBgSubTab] = useState<"magic"|"photo"|"color">("color");
   const [toast, setToast]     = useState(false);
   const [ready, setReady]     = useState(false);
+  const [errMsg, setErrMsg]   = useState<string | null>(null);
   const processing = useRef<Set<string>>(new Set());
   const dlRef      = useRef<HTMLDivElement>(null);
   const orderRef   = useRef(Date.now());
@@ -141,9 +146,11 @@ export default function ToolPage() {
 
   // restore from IDB
   useEffect(() => {
+    const fallback = setTimeout(() => setReady(true), 4000);
     (async () => {
       try {
         const entries = await idbLoadAll();
+        clearTimeout(fallback);
         if (!entries.length) { setReady(true); return; }
         const items: Img[] = entries.map(e => {
           const file = new File([e.fileData], e.fileName, { type: e.fileType });
@@ -163,6 +170,7 @@ export default function ToolPage() {
         orderRef.current = Math.max(...items.map(i => i.order)) + 1;
         items.filter(i => i.stage === "queued").forEach(process);
       } catch {}
+      clearTimeout(fallback);
       setReady(true);
     })();
   }, []);
@@ -231,15 +239,23 @@ export default function ToolPage() {
     } catch {}
   }
 
-  const onDrop = useCallback((files: File[]) => {
-    const valid = files.filter(f => f.size <= 10e6).map(f => mkImg(f, orderRef.current++));
+  const onDrop = useCallback((accepted: File[], rejected: { file: File }[]) => {
+    const tooLarge = accepted.filter(f => f.size > 25e6);
+    const valid = accepted.filter(f => f.size <= 25e6).map(f => mkImg(f, orderRef.current++));
+    const bad = tooLarge.length + rejected.length;
+    if (bad > 0) {
+      setErrMsg(`${bad} file${bad > 1 ? "s" : ""} skipped — max 25 MB, images only`);
+      setTimeout(() => setErrMsg(null), 4000);
+    }
+    if (!valid.length) return;
     setImgs(p => [...p, ...valid]);
     if (!aid && valid.length) setAid(valid[0].id);
     valid.forEach(process);
   }, [aid]);
 
   const { getRootProps, getInputProps, isDragActive, open: pick } = useDropzone({
-    onDrop, accept: { "image/*": [".jpg", ".jpeg", ".png", ".webp"] }, noClick: true, noKeyboard: true,
+    onDrop, accept: { "image/*": [".jpg", ".jpeg", ".png", ".webp"] },
+    maxSize: 25 * 1024 * 1024, noClick: true, noKeyboard: true,
   });
 
   async function applyBg(id: string, color: string | null) {
@@ -322,12 +338,16 @@ export default function ToolPage() {
   async function loadSample(url: string, name: string) {
     try {
       const res = await fetch(url);
+      if (!res.ok) throw new Error("fetch");
       const blob = await res.blob();
-      const file = new File([blob], name, { type: blob.type });
+      const file = new File([blob], name, { type: blob.type || "image/jpeg" });
       const item = mkImg(file, orderRef.current++);
       setImgs([item]); setAid(item.id);
       process(item);
-    } catch {}
+    } catch {
+      setErrMsg("Could not load sample image. Check your connection.");
+      setTimeout(() => setErrMsg(null), 4000);
+    }
   }
 
   const doneCount = imgs.filter(i => i.stage === "done").length;
@@ -342,8 +362,14 @@ export default function ToolPage() {
 
   // ── UPLOAD STATE ───────────────────────────────────────────────────────────
   if (!imgs.length) return (
-    <div {...getRootProps()} style={{ height: "calc(100vh - 64px)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "#fff", cursor: "default" }}>
+    <div {...getRootProps()} style={{ height: "calc(100vh - 64px)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "#fff", cursor: "default", position: "relative" }}>
       <input {...getInputProps()} />
+      {errMsg && (
+        <div style={{ position: "absolute", top: 16, left: "50%", transform: "translateX(-50%)", zIndex: 50, display: "flex", alignItems: "center", gap: 10, background: "#ef4444", color: "#fff", fontSize: 13, fontWeight: 600, padding: "10px 18px", borderRadius: 16, boxShadow: "0 8px 32px rgba(0,0,0,.3)", whiteSpace: "nowrap" }}>
+          <AlertCircle size={14} /> {errMsg}
+          <button onClick={() => setErrMsg(null)} style={{ background: "none", border: "none", color: "rgba(255,255,255,.7)", cursor: "pointer" }}><X size={13} /></button>
+        </div>
+      )}
 
       {isDragActive && (
         <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(245,243,255,.95)", border: "3px dashed #7c3aed" }}>
@@ -505,6 +531,12 @@ export default function ToolPage() {
           <div style={{ position: "absolute", top: 16, left: "50%", transform: "translateX(-50%)", zIndex: 50, display: "flex", alignItems: "center", gap: 10, background: "#111827", color: "#fff", fontSize: 13, fontWeight: 600, padding: "10px 18px", borderRadius: 16, boxShadow: "0 8px 32px rgba(0,0,0,.3)" }}>
             <Check size={14} color="#4ade80" /> Image saved! Upload it in Canva
             <button onClick={() => setToast(false)} style={{ background: "none", border: "none", color: "#9ca3af", cursor: "pointer" }}><X size={13} /></button>
+          </div>
+        )}
+        {errMsg && (
+          <div style={{ position: "absolute", top: 16, left: "50%", transform: "translateX(-50%)", zIndex: 50, display: "flex", alignItems: "center", gap: 10, background: "#ef4444", color: "#fff", fontSize: 13, fontWeight: 600, padding: "10px 18px", borderRadius: 16, boxShadow: "0 8px 32px rgba(0,0,0,.3)", whiteSpace: "nowrap" }}>
+            <AlertCircle size={14} /> {errMsg}
+            <button onClick={() => setErrMsg(null)} style={{ background: "none", border: "none", color: "rgba(255,255,255,.7)", cursor: "pointer" }}><X size={13} /></button>
           </div>
         )}
 
