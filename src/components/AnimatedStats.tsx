@@ -45,7 +45,7 @@ export default function AnimatedStats() {
       <div className="max-w-5xl mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-8">
         {STATS.map(({ end, suffix, label, icon: Icon, color }, i) => (
           <div key={label}
-            className={`text-center ${visible ? "anim-fade-up" : "opacity-0"}`}
+            className="text-center"
             style={{ animationDelay: `${i * 0.12}s` }}>
             <div className={`text-4xl md:text-5xl font-black ${color} mb-1 tabular-nums`}>
               <Counter end={end} suffix={suffix} run={visible} />
