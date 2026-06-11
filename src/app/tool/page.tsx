@@ -417,54 +417,54 @@ export default function ToolPage() {
     <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 64px)", overflow: "hidden", background: "#fff" }}>
 
       {/* ── HORIZONTAL TOOLBAR ──────────────────────────────────────────── */}
-      <div style={{ height: 52, flexShrink: 0, borderBottom: "1px solid #e5e7eb", display: "flex", alignItems: "center", padding: "0 16px", gap: 2, background: "#fff" }}>
+      <div style={{ height: 52, flexShrink: 0, borderBottom: "1px solid #e5e7eb", display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center", padding: "0 16px", background: "#fff" }}>
 
-        {/* New Image */}
-        <button onClick={pick}
-          style={{ display: "flex", alignItems: "center", gap: 5, padding: "5px 12px", borderRadius: 8, border: "1.5px solid #e5e7eb", background: "transparent", color: "#6b7280", fontWeight: 600, fontSize: 12, cursor: "pointer", flexShrink: 0 }}>
-          <Plus size={13} /> New Image
-        </button>
+        {/* LEFT — New Image */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <button onClick={pick}
+            style={{ display: "flex", alignItems: "center", gap: 5, padding: "5px 12px", borderRadius: 8, border: "1.5px solid #e5e7eb", background: "transparent", color: "#6b7280", fontWeight: 600, fontSize: 12, cursor: "pointer", whiteSpace: "nowrap" }}>
+            <Plus size={13} /> New Image
+          </button>
+        </div>
 
-        <div style={{ width: 1, height: 20, background: "#e5e7eb", margin: "0 10px", flexShrink: 0 }} />
+        {/* CENTER — Tab buttons */}
+        <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
+          {TABS.map(({ id, label, Icon }) => {
+            const on = tab === id;
+            return (
+              <button key={id} onClick={() => setTab(on ? null : id)}
+                style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", borderRadius: 8, border: "none", cursor: "pointer", background: on ? "#f5f3ff" : "transparent", color: on ? "#6d28d9" : "#6b7280", fontWeight: on ? 700 : 500, fontSize: 13, transition: "all .15s", whiteSpace: "nowrap" }}>
+                <Icon size={14} color={on ? "#7c3aed" : "#9ca3af"} /> {label}
+              </button>
+            );
+          })}
+        </div>
 
-        {/* Tab buttons */}
-        {TABS.map(({ id, label, Icon }) => {
-          const on = tab === id;
-          return (
-            <button key={id} onClick={() => setTab(on ? null : id)}
-              style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", borderRadius: 8, border: "none", cursor: "pointer", background: on ? "#f5f3ff" : "transparent", color: on ? "#6d28d9" : "#6b7280", fontWeight: on ? 700 : 500, fontSize: 13, transition: "all .15s", whiteSpace: "nowrap" }}>
-              <Icon size={14} color={on ? "#7c3aed" : "#9ca3af"} /> {label}
+        {/* RIGHT — Undo / Redo / Credits / Download */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 4 }}>
+          {[{ fn: () => active && undo(active.id), Icon: Undo2, off: !active?.undoStack.length, title: "Undo" },
+            { fn: () => active && redo(active.id), Icon: Redo2, off: !active?.redoStack.length, title: "Redo" }].map(({ fn, Icon, off, title }) => (
+            <button key={title} onClick={fn} disabled={off} title={title}
+              style={{ width: 32, height: 32, borderRadius: 8, border: "none", background: "transparent", cursor: off ? "not-allowed" : "pointer", opacity: off ? 0.3 : 1, display: "flex", alignItems: "center", justifyContent: "center", color: "#6b7280" }}>
+              <Icon size={15} />
             </button>
-          );
-        })}
+          ))}
 
-        <div style={{ flex: 1 }} />
+          <div style={{ width: 1, height: 20, background: "#e5e7eb", margin: "0 4px" }} />
 
-        {/* Undo / Redo */}
-        {[{ fn: () => active && undo(active.id), Icon: Undo2, off: !active?.undoStack.length, title: "Undo" },
-          { fn: () => active && redo(active.id), Icon: Redo2, off: !active?.redoStack.length, title: "Redo" }].map(({ fn, Icon, off, title }) => (
-          <button key={title} onClick={fn} disabled={off} title={title}
-            style={{ width: 32, height: 32, borderRadius: 8, border: "none", background: "transparent", cursor: off ? "not-allowed" : "pointer", opacity: off ? 0.3 : 1, display: "flex", alignItems: "center", justifyContent: "center", color: "#6b7280" }}>
-            <Icon size={15} />
-          </button>
-        ))}
+          {session && (
+            <div style={{ display: "flex", alignItems: "center", gap: 5, background: "#f5f3ff", border: "1px solid #ddd6fe", borderRadius: 99, padding: "4px 10px", fontSize: 12, fontWeight: 700, color: "#6d28d9", flexShrink: 0, marginRight: 2 }}>
+              <Zap size={11} fill="currentColor" /> {credits}
+            </div>
+          )}
 
-        <div style={{ width: 1, height: 20, background: "#e5e7eb", margin: "0 6px" }} />
-
-        {/* Credits */}
-        {session && (
-          <div style={{ display: "flex", alignItems: "center", gap: 5, background: "#f5f3ff", border: "1px solid #ddd6fe", borderRadius: 99, padding: "4px 10px", fontSize: 12, fontWeight: 700, color: "#6d28d9", flexShrink: 0, marginRight: 6 }}>
-            <Zap size={11} fill="currentColor" /> {credits}
-          </div>
-        )}
-
-        {/* Download dropdown */}
-        <div style={{ position: "relative", flexShrink: 0 }} ref={dlRef}>
-          <button onClick={() => setDlOpen(o => !o)}
-            style={{ display: "flex", alignItems: "center", gap: 7, background: "#2563eb", color: "#fff", fontWeight: 700, fontSize: 13, padding: "0 18px", height: 36, borderRadius: 99, border: "none", cursor: "pointer", boxShadow: "0 2px 12px rgba(37,99,235,.35)" }}>
-            <Download size={14} /> Download
-            <ChevronDown size={12} style={{ transition: "transform .15s", transform: dlOpen ? "rotate(180deg)" : "none" }} />
-          </button>
+          {/* Download dropdown */}
+          <div style={{ position: "relative", flexShrink: 0 }} ref={dlRef}>
+            <button onClick={() => setDlOpen(o => !o)}
+              style={{ display: "flex", alignItems: "center", gap: 7, background: "#2563eb", color: "#fff", fontWeight: 700, fontSize: 13, padding: "0 18px", height: 36, borderRadius: 99, border: "none", cursor: "pointer", boxShadow: "0 2px 12px rgba(37,99,235,.35)" }}>
+              <Download size={14} /> Download
+              <ChevronDown size={12} style={{ transition: "transform .15s", transform: dlOpen ? "rotate(180deg)" : "none" }} />
+            </button>
 
           {dlOpen && (
             <div style={{ position: "absolute", right: 0, top: "calc(100% + 8px)", width: 240, background: "#fff", border: "1px solid #e5e7eb", borderRadius: 16, boxShadow: "0 16px 48px rgba(0,0,0,.13)", zIndex: 9999, overflow: "hidden" }}>
@@ -514,6 +514,7 @@ export default function ToolPage() {
               )}
             </div>
           )}
+          </div>
         </div>
       </div>
 
