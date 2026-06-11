@@ -181,18 +181,19 @@ export default function HomePage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
-              { n: "01", icon: Upload,   title: "Upload",     desc: "Drag & drop or click to upload JPG, PNG, or WEBP. Up to 12MB." },
-              { n: "02", icon: Cpu,      title: "AI Removes", desc: "Our AI model detects and removes the background in under 2 seconds." },
-              { n: "03", icon: Download, title: "Download",   desc: "Save as transparent PNG. Free forever, no watermarks, no limits." },
-            ].map(({ n, icon: Icon, title, desc }) => (
-              <div key={n} className="relative bg-[#0d0d1f] border border-white/10 rounded-3xl p-8 text-center hover:border-violet-500/30 transition-all group card-hover">
-                <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg group-hover:scale-110 transition-transform"
-                  style={{ background: "linear-gradient(135deg,#7c3aed,#3b82f6)" }}>
+              { n: "01", icon: Upload,   title: "Upload",     desc: "Drag & drop or click to upload JPG, PNG, or WEBP. Up to 12MB.", color: "#7c3aed,#3b82f6" },
+              { n: "02", icon: Cpu,      title: "AI Removes", desc: "Our AI model detects and removes the background in under 2 seconds.", color: "#3b82f6,#0891b2" },
+              { n: "03", icon: Download, title: "Download",   desc: "Save as transparent PNG. Free forever, no watermarks, no limits.", color: "#10b981,#3b82f6" },
+            ].map(({ n, icon: Icon, title, desc, color }) => (
+              <div key={n} className="relative rounded-3xl p-8 text-center transition-all group card-hover"
+                style={{ background: "linear-gradient(135deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))", border: "1px solid rgba(255,255,255,0.15)", boxShadow: "0 4px 24px rgba(0,0,0,0.4)" }}>
+                <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5 group-hover:scale-110 transition-transform"
+                  style={{ background: `linear-gradient(135deg,#${color.split(",")[0].replace("#","")},#${color.split(",")[1].replace("#","")})`, boxShadow: `0 8px 24px rgba(124,58,237,0.35)` }}>
                   <Icon size={26} className="text-white" />
                 </div>
-                <div className="absolute top-6 right-6 text-[44px] font-black text-white/5 leading-none select-none">{n}</div>
+                <div className="absolute top-6 right-6 text-[44px] font-black leading-none select-none" style={{ color: "rgba(255,255,255,0.06)" }}>{n}</div>
                 <h3 className="text-lg font-black text-white mb-2">{title}</h3>
-                <p className="text-gray-500 text-sm leading-relaxed">{desc}</p>
+                <p className="text-gray-400 text-sm leading-relaxed">{desc}</p>
               </div>
             ))}
           </div>
@@ -251,7 +252,8 @@ export default function HomePage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {USE_CASES.map(({ icon: Icon, label, desc, pill, bg }) => (
               <div key={label}
-                className="group bg-[#0d0d1f] border border-white/10 rounded-2xl p-6 hover:border-white/20 transition-all card-hover">
+                className="group rounded-2xl p-6 transition-all card-hover"
+                style={{ background: "linear-gradient(135deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))", border: "1px solid rgba(255,255,255,0.12)", boxShadow: "0 2px 16px rgba(0,0,0,0.3)" }}>
                 <div className="flex items-start justify-between mb-4">
                   <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow-lg" style={{ background: bg }}>
                     <Icon size={22} className="text-white" />
@@ -286,8 +288,10 @@ export default function HomePage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {FEATURES.map(({ icon: Icon, title, desc }) => (
               <div key={title}
-                className="bg-[#0d0d1f] border border-white/10 rounded-2xl p-6 hover:border-violet-500/30 transition-all group card-hover">
-                <div className="w-11 h-11 bg-violet-500/15 rounded-xl flex items-center justify-center mb-4 group-hover:bg-violet-500/25 transition-colors">
+                className="rounded-2xl p-6 transition-all group card-hover"
+                style={{ background: "linear-gradient(135deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))", border: "1px solid rgba(255,255,255,0.12)", boxShadow: "0 2px 16px rgba(0,0,0,0.3)" }}>
+                <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-4 transition-colors"
+                  style={{ background: "linear-gradient(135deg,rgba(124,58,237,0.3),rgba(59,130,246,0.2))", border: "1px solid rgba(124,58,237,0.3)" }}>
                   <Icon size={20} className="text-violet-400" />
                 </div>
                 <h3 className="text-white font-black mb-2">{title}</h3>
@@ -325,7 +329,8 @@ export default function HomePage() {
             </div>
 
             {/* Code block */}
-            <div className="bg-[#060610] border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
+            <div className="rounded-2xl overflow-hidden"
+              style={{ background: "#060610", border: "1px solid rgba(255,255,255,0.15)", boxShadow: "0 8px 40px rgba(0,0,0,0.5)" }}>
               <div className="flex items-center gap-2 px-5 py-3 border-b border-white/10 bg-[#0a0a18]">
                 <div className="w-3 h-3 rounded-full bg-red-500/70" />
                 <div className="w-3 h-3 rounded-full bg-yellow-500/70" />
@@ -371,7 +376,8 @@ export default function HomePage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {TESTIMONIALS.map(({ name, role, text, avatar }) => (
-              <div key={name} className="bg-[#0d0d1f] border border-white/10 rounded-2xl p-6 hover:border-violet-500/20 transition-all card-hover">
+              <div key={name} className="rounded-2xl p-6 transition-all card-hover"
+                style={{ background: "linear-gradient(135deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02))", border: "1px solid rgba(255,255,255,0.12)", boxShadow: "0 4px 20px rgba(0,0,0,0.3)" }}>
                 <div className="flex gap-1 mb-4">
                   {[...Array(5)].map((_, j) => <Star key={j} size={13} className="text-yellow-400" fill="currentColor" />)}
                 </div>
@@ -401,7 +407,8 @@ export default function HomePage() {
           </div>
           <div className="space-y-3">
             {FAQS.map(({ q, a }) => (
-              <details key={q} className="group bg-[#0d0d1f] border border-white/10 hover:border-violet-500/25 rounded-2xl transition-colors">
+              <details key={q} className="group rounded-2xl transition-colors"
+                style={{ background: "linear-gradient(135deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))", border: "1px solid rgba(255,255,255,0.12)" }}>
                 <summary className="flex items-center justify-between px-6 py-5 cursor-pointer list-none font-bold text-white hover:text-violet-300 transition-colors">
                   {q}
                   <ChevronDown size={16} className="text-gray-500 group-open:rotate-180 transition-transform flex-shrink-0 ml-3" />

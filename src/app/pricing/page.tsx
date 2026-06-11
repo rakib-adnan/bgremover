@@ -87,9 +87,14 @@ export default function PricingPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
           {PACKAGES.map((pkg) => (
             <div key={pkg.id}
-              className={`bg-[#0d0d1f] rounded-2xl p-6 border relative transition hover:border-violet-500/40 ${
-                pkg.popular ? "border-violet-500/50 shadow-lg shadow-violet-500/10" : "border-white/10"
-              }`}>
+              className="rounded-2xl p-6 relative transition-all"
+              style={{
+                background: pkg.popular
+                  ? "linear-gradient(135deg,rgba(124,58,237,0.15),rgba(59,130,246,0.1))"
+                  : "linear-gradient(135deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))",
+                border: pkg.popular ? "1px solid rgba(124,58,237,0.5)" : "1px solid rgba(255,255,255,0.15)",
+                boxShadow: pkg.popular ? "0 4px 32px rgba(124,58,237,0.25)" : "0 2px 16px rgba(0,0,0,0.4)",
+              }}>
               {pkg.popular && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-violet-600 to-blue-600 text-white text-xs font-black px-3 py-1 rounded-full whitespace-nowrap">
                   MOST POPULAR
@@ -122,7 +127,8 @@ export default function PricingPage() {
         </div>
 
         {/* Custom Calculator */}
-        <div className="bg-[#0d0d1f] rounded-2xl border border-white/10 p-8">
+        <div className="rounded-2xl p-8"
+          style={{ background: "linear-gradient(135deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))", border: "1px solid rgba(255,255,255,0.15)", boxShadow: "0 4px 24px rgba(0,0,0,0.4)" }}>
           <div className="flex items-center gap-3 mb-6">
             <div className="w-11 h-11 bg-violet-500/15 rounded-xl flex items-center justify-center">
               <Calculator size={20} className="text-violet-400" />
@@ -210,7 +216,8 @@ export default function PricingPage() {
             { q: "What counts as 1 credit?", a: "One full-resolution HD background removal of one image." },
             { q: "Can I get a refund?", a: "Yes, unused credits can be refunded within 30 days of purchase." },
           ].map(({ q, a }) => (
-            <div key={q} className="bg-[#0d0d1f] rounded-xl p-5 border border-white/10">
+            <div key={q} className="rounded-xl p-5"
+              style={{ background: "linear-gradient(135deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))", border: "1px solid rgba(255,255,255,0.12)" }}>
               <p className="font-black text-white mb-2">{q}</p>
               <p className="text-gray-500">{a}</p>
             </div>

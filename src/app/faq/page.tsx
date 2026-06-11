@@ -31,7 +31,8 @@ export default function FAQPage() {
 
         <div className="space-y-3">
           {FAQS.map(({ q, a }) => (
-            <details key={q} className="group bg-[#0d0d1f] border border-white/10 hover:border-violet-500/25 rounded-2xl transition-colors">
+            <details key={q} className="group rounded-2xl transition-colors"
+              style={{ background: "linear-gradient(135deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))", border: "1px solid rgba(255,255,255,0.14)" }}>
               <summary className="flex items-center justify-between px-6 py-5 cursor-pointer list-none font-bold text-white hover:text-violet-300 transition-colors gap-3">
                 <span>{q}</span>
                 <ChevronDown size={16} className="text-gray-500 group-open:rotate-180 transition-transform flex-shrink-0" />
