@@ -8,7 +8,7 @@ import {
   Upload, Download, Loader2, AlertCircle, CheckCircle,
   ImageIcon, Trash2, Zap, Lock
 } from "lucide-react";
-import removeBackground from "@imgly/background-removal";
+import { removeBackground } from "@imgly/background-removal";
 
 type Stage = "idle" | "processing" | "done" | "error";
 
