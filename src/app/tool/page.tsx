@@ -553,12 +553,7 @@ export default function ToolPage() {
               onCancel={() => setBrush(false)} />
           ) : active.stage === "done" && active.resultUrl ? (
             <div style={{ padding: 32, paddingRight: panelOpen ? 320 : 32, display: "flex", alignItems: "center", justifyContent: "center", width: "100%", height: "100%", boxSizing: "border-box", transition: "padding .2s" }}>
-              <div style={{
-                position: "relative", borderRadius: 12, overflow: "hidden",
-                boxShadow: active.shadow ? "0 20px 60px rgba(0,0,0,.5), 0 8px 40px rgba(0,0,0,.2)" : "0 8px 40px rgba(0,0,0,.12)",
-                maxWidth: "min(520px, calc(100% - 48px))",
-                width: "min(520px, calc(100% - 48px))",
-              }}>
+              <div style={{ position: "relative", borderRadius: 12, overflow: "hidden", boxShadow: active.shadow ? "0 20px 60px rgba(0,0,0,.5), 0 8px 40px rgba(0,0,0,.2)" : "0 8px 40px rgba(0,0,0,.12)" }}>
                 {/* Background layer */}
                 {active.bgPhotoUrl ? (
                   <div style={{ position: "absolute", inset: 0, backgroundImage: `url(${active.bgPhotoUrl})`, backgroundSize: "cover", backgroundPosition: "center", filter: active.blurBg > 0 ? `blur(${active.blurBg * 2}px)` : undefined, transform: active.blurBg > 0 ? "scale(1.08)" : undefined }} />
@@ -568,7 +563,10 @@ export default function ToolPage() {
                   <div className="checker" style={{ position: "absolute", inset: 0 }} />
                 )}
                 <img src={active.resultUrl} alt="Result"
-                  style={{ display: "block", position: "relative", maxWidth: "100%", maxHeight: "calc(100vh - 64px - 52px - 72px - 64px)", width: "auto", height: "auto",
+                  style={{ display: "block", position: "relative",
+                    maxWidth: "min(520px, calc(100vw - 80px))",
+                    maxHeight: "calc(100vh - 260px)",
+                    width: "auto", height: "auto",
                     filter: `brightness(${active.brightness}%) contrast(${active.contrast}%)`,
                     transform: `scaleX(${active.flipH ? -1 : 1}) scaleY(${active.flipV ? -1 : 1})` }} />
               </div>
