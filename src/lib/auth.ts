@@ -55,7 +55,7 @@ export const authOptions: NextAuthOptions = {
       // Handle Google sign-in: create WP account if first time
       if (account?.provider === "google") {
         try {
-          const res = await fetch(`${process.env.WORDPRESS_API_URL}/bgremover/v1/register`, {
+          await fetch(`${process.env.WORDPRESS_API_URL}/bgremover/v1/register`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -65,11 +65,7 @@ export const authOptions: NextAuthOptions = {
               social: true,
             }),
           });
-          // Ignore if user already exists (409 = already registered)
-          if (!res.ok) {
-            const d = await res.json();
-            if (!d.message?.includes("already exists")) return false;
-          }
+          // Always allow sign-in — user may already exist or WP endpoint may differ
         } catch {
           // Continue even if WP registration fails
         }
