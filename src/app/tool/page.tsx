@@ -524,7 +524,8 @@ export default function ToolPage() {
               <div style={{
                 position: "relative", borderRadius: 12, overflow: "hidden",
                 boxShadow: active.shadow ? "0 20px 60px rgba(0,0,0,.5), 0 8px 40px rgba(0,0,0,.2)" : "0 8px 40px rgba(0,0,0,.12)",
-                maxWidth: "100%", maxHeight: "100%",
+                maxWidth: "min(520px, calc(100% - 48px))",
+                width: "min(520px, calc(100% - 48px))",
               }}>
                 {/* Background layer */}
                 {active.bgPhotoUrl ? (
