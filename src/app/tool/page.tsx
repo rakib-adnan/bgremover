@@ -60,15 +60,18 @@ interface Img {
   origUrl: string; resultUrl: string | null; resultBlob: Blob | null;
   stage: "queued" | "processing" | "done" | "error";
   progress: number; error?: string;
-  bgColor: string | null; flipH: boolean; flipV: boolean;
+  bgColor: string | null; bgPhotoUrl: string | null;
+  flipH: boolean; flipV: boolean;
   brightness: number; contrast: number;
+  shadow: boolean; blurBg: number;
   undoStack: { url: string; blob: Blob }[];
   redoStack: { url: string; blob: Blob }[];
 }
 function mkImg(file: File, order: number): Img {
   return { id: crypto.randomUUID(), order, file, origUrl: URL.createObjectURL(file),
     resultUrl: null, resultBlob: null, stage: "queued", progress: 0,
-    bgColor: null, flipH: false, flipV: false, brightness: 100, contrast: 100,
+    bgColor: null, bgPhotoUrl: null, flipH: false, flipV: false,
+    brightness: 100, contrast: 100, shadow: false, blurBg: 0,
     undoStack: [], redoStack: [] };
 }
 
@@ -94,6 +97,21 @@ const TABS: { id: Tab; label: string; Icon: React.ElementType }[] = [
   { id: "effects",    label: "Effects",    Icon: Sparkles },
   { id: "adjust",     label: "Adjust",     Icon: Sliders },
   { id: "design",     label: "Design",     Icon: LayoutTemplate },
+];
+
+const PEXELS_BG = [
+  "https://images.pexels.com/photos/1252869/pexels-photo-1252869.jpeg",
+  "https://images.pexels.com/photos/1287145/pexels-photo-1287145.jpeg",
+  "https://images.pexels.com/photos/1261728/pexels-photo-1261728.jpeg",
+  "https://images.pexels.com/photos/1525041/pexels-photo-1525041.jpeg",
+  "https://images.pexels.com/photos/1266810/pexels-photo-1266810.jpeg",
+  "https://images.pexels.com/photos/949587/pexels-photo-949587.jpeg",
+  "https://images.pexels.com/photos/1694000/pexels-photo-1694000.jpeg",
+  "https://images.pexels.com/photos/733745/pexels-photo-733745.jpeg",
+  "https://images.pexels.com/photos/1562961/pexels-photo-1562961.jpeg",
+  "https://images.pexels.com/photos/2526105/pexels-photo-2526105.jpeg",
+  "https://images.pexels.com/photos/1906658/pexels-photo-1906658.jpeg",
+  "https://images.pexels.com/photos/1448735/pexels-photo-1448735.jpeg",
 ];
 
 const SAMPLE_IMGS = [
@@ -137,8 +155,9 @@ export default function ToolPage() {
           }
           return { id: e.id, order: e.order, file, origUrl, resultUrl, resultBlob,
             stage: resultUrl ? "done" : "queued", progress: resultUrl ? 100 : 0,
-            bgColor: e.bgColor, flipH: e.flipH, flipV: e.flipV,
-            brightness: e.brightness, contrast: e.contrast, undoStack: [], redoStack: [] } as Img;
+            bgColor: e.bgColor, bgPhotoUrl: null, flipH: e.flipH, flipV: e.flipV,
+            brightness: e.brightness, contrast: e.contrast, shadow: false, blurBg: 0,
+            undoStack: [], redoStack: [] } as Img;
         });
         setImgs(items); setAid(items[0]?.id ?? null);
         orderRef.current = Math.max(...items.map(i => i.order)) + 1;
@@ -296,6 +315,10 @@ export default function ToolPage() {
     setImgs(p => { const n = p.filter(i => i.id !== id); if (aid === id) setAid(n[0]?.id ?? null); return n; });
     idbDelete(id);
   }
+  function applyBgPhoto(id: string, photoUrl: string | null) {
+    upd(id, { bgPhotoUrl: photoUrl, bgColor: null });
+  }
+
   async function loadSample(url: string, name: string) {
     try {
       const res = await fetch(url);
@@ -500,11 +523,17 @@ export default function ToolPage() {
             <div style={{ padding: 32, paddingRight: panelOpen ? 320 : 32, display: "flex", alignItems: "center", justifyContent: "center", width: "100%", height: "100%", boxSizing: "border-box", transition: "padding .2s" }}>
               <div style={{
                 position: "relative", borderRadius: 12, overflow: "hidden",
-                boxShadow: "0 8px 40px rgba(0,0,0,.12)",
-                background: active.bgColor ?? undefined,
+                boxShadow: active.shadow ? "0 20px 60px rgba(0,0,0,.5), 0 8px 40px rgba(0,0,0,.2)" : "0 8px 40px rgba(0,0,0,.12)",
                 maxWidth: "100%", maxHeight: "100%",
               }}>
-                {!active.bgColor && <div className="checker" style={{ position: "absolute", inset: 0 }} />}
+                {/* Background layer */}
+                {active.bgPhotoUrl ? (
+                  <div style={{ position: "absolute", inset: 0, backgroundImage: `url(${active.bgPhotoUrl})`, backgroundSize: "cover", backgroundPosition: "center", filter: active.blurBg > 0 ? `blur(${active.blurBg * 2}px)` : undefined, transform: active.blurBg > 0 ? "scale(1.08)" : undefined }} />
+                ) : active.bgColor ? (
+                  <div style={{ position: "absolute", inset: 0, background: active.bgColor }} />
+                ) : (
+                  <div className="checker" style={{ position: "absolute", inset: 0 }} />
+                )}
                 <img src={active.resultUrl} alt="Result"
                   style={{ display: "block", position: "relative", maxWidth: "100%", maxHeight: "calc(100vh - 64px - 52px - 72px - 64px)", width: "auto", height: "auto",
                     filter: `brightness(${active.brightness}%) contrast(${active.contrast}%)`,
@@ -603,28 +632,22 @@ export default function ToolPage() {
                     </div>
                   )}
 
-                  {/* Photo tab - Pro locked grid */}
+                  {/* Photo tab - free Pexels grid */}
                   {bgSubTab === "photo" && (
                     <div>
-                      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6, position: "relative" }}>
-                        {["https://images.pexels.com/photos/1252869/pexels-photo-1252869.jpeg",
-                          "https://images.pexels.com/photos/1287145/pexels-photo-1287145.jpeg",
-                          "https://images.pexels.com/photos/1261728/pexels-photo-1261728.jpeg",
-                          "https://images.pexels.com/photos/1525041/pexels-photo-1525041.jpeg",
-                          "https://images.pexels.com/photos/1266810/pexels-photo-1266810.jpeg",
-                          "https://images.pexels.com/photos/1906658/pexels-photo-1906658.jpeg",
-                        ].map((url, i) => (
-                          <div key={i} style={{ position: "relative", borderRadius: 8, overflow: "hidden", aspectRatio: "1", cursor: "not-allowed" }}>
-                            <img src={`${url}?auto=compress&cs=tinysrgb&w=120`} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                            <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,.35)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                              <Lock size={13} color="#fff" />
-                            </div>
-                          </div>
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6 }}>
+                        {/* Transparent / no bg */}
+                        <button onClick={() => active && applyBgPhoto(active.id, null)}
+                          style={{ aspectRatio: "1", borderRadius: 8, overflow: "hidden", cursor: "pointer", border: active?.bgPhotoUrl === null && !active?.bgColor ? "2.5px solid #2563eb" : "1.5px solid #e5e7eb", padding: 0, background: "none" }}>
+                          <div className="checker" style={{ width: "100%", height: "100%", borderRadius: 6 }} />
+                        </button>
+                        {PEXELS_BG.map(url => (
+                          <button key={url} onClick={() => active && applyBgPhoto(active.id, url)}
+                            style={{ aspectRatio: "1", borderRadius: 8, overflow: "hidden", cursor: "pointer", border: active?.bgPhotoUrl === url ? "2.5px solid #2563eb" : "1.5px solid #e5e7eb", padding: 0, background: "none", boxShadow: active?.bgPhotoUrl === url ? "0 0 0 3px #bfdbfe" : undefined }}>
+                            <img src={`${url}?auto=compress&cs=tinysrgb&w=120`} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                          </button>
                         ))}
                       </div>
-                      <Link href="/pricing" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "9px 0", borderRadius: 10, background: "linear-gradient(135deg,#7c3aed,#3b82f6)", color: "#fff", fontWeight: 700, fontSize: 12, textDecoration: "none", marginTop: 10 }}>
-                        <Zap size={12} fill="currentColor" /> Unlock Photo Backgrounds
-                      </Link>
                     </div>
                   )}
 
@@ -651,24 +674,42 @@ export default function ToolPage() {
 
               {/* EFFECTS */}
               {tab === "effects" && (
-                <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                  {/* Shadow toggle */}
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>Add Shadow</span>
+                    <button onClick={() => active && upd(active.id, { shadow: !active.shadow })}
+                      style={{ width: 40, height: 22, borderRadius: 99, border: "none", cursor: "pointer", background: active?.shadow ? "#2563eb" : "#d1d5db", position: "relative", transition: "background .2s", flexShrink: 0 }}>
+                      <span style={{ position: "absolute", top: 2, left: active?.shadow ? 20 : 2, width: 18, height: 18, borderRadius: "50%", background: "#fff", transition: "left .2s", boxShadow: "0 1px 3px rgba(0,0,0,.2)" }} />
+                    </button>
+                  </div>
+
+                  {/* Blur background */}
+                  <div>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>Blur Background</span>
+                      <span style={{ fontSize: 11, color: "#9ca3af", fontWeight: 700, background: "#f3f4f6", padding: "1px 6px", borderRadius: 6 }}>{active?.blurBg ?? 0}</span>
+                    </div>
+                    <input type="range" min={0} max={10} value={active?.blurBg ?? 0}
+                      onChange={e => active && upd(active.id, { blurBg: +e.target.value })}
+                      style={{ width: "100%", cursor: "pointer", accentColor: "#2563eb" }} />
+                    <p style={{ fontSize: 11, color: "#9ca3af", marginTop: 4 }}>Set a photo background first to use blur</p>
+                  </div>
+
+                  <div style={{ height: 1, background: "#f3f4f6" }} />
+
+                  {/* Brightness */}
                   {[{ label: "Brightness", key: "brightness" as const, min: 50, max: 200 },
                     { label: "Contrast",   key: "contrast"   as const, min: 50, max: 200 }].map(({ label, key, min, max }) => (
                     <div key={key}>
                       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                        <span style={{ fontSize: 12, fontWeight: 600, color: "#374151" }}>{label}</span>
+                        <span style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>{label}</span>
                         <span style={{ fontSize: 11, color: "#9ca3af", fontWeight: 700, background: "#f3f4f6", padding: "1px 6px", borderRadius: 6 }}>{active?.[key]}%</span>
                       </div>
                       <input type="range" min={min} max={max} value={active?.[key]}
                         onChange={e => active && upd(active.id, { [key]: +e.target.value } as Partial<Img>)}
                         style={{ width: "100%", cursor: "pointer", accentColor: "#2563eb" }} />
                     </div>
-                  ))}
-                  <div style={{ height: 1, background: "#f3f4f6" }} />
-                  {["Shadow", "Blur background", "Vintage"].map(f => (
-                    <button key={f} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "9px 0", borderRadius: 10, border: "1.5px dashed #e5e7eb", background: "transparent", color: "#c4c9d4", fontWeight: 600, fontSize: 12, cursor: "not-allowed" }}>
-                      <Lock size={11} /> {f} — Pro
-                    </button>
                   ))}
                 </div>
               )}
