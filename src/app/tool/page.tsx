@@ -525,96 +525,99 @@ export default function ToolPage() {
         </div>
       </div>
 
-      {/* ── CANVAS + FLOATING PANEL ─────────────────────────────────────── */}
-      <div {...getRootProps()} style={{ flex: 1, position: "relative", overflow: "hidden", background: "#f3f3f3", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <input {...getInputProps()} />
+      {/* ── CANVAS + SIDE PANEL (flex row, remove.bg style) ─────────────── */}
+      <div style={{ flex: 1, display: "flex", overflow: "hidden", position: "relative" }}>
 
-        {isDragActive && (
-          <div style={{ position: "absolute", inset: 16, zIndex: 40, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(245,243,255,.95)", border: "2px dashed #7c3aed", borderRadius: 20 }}>
-            <p style={{ color: "#6d28d9", fontWeight: 800, fontSize: 16 }}>Drop to add images</p>
-          </div>
-        )}
+        {/* Canvas (dropzone) */}
+        <div {...getRootProps()} style={{ flex: 1, position: "relative", overflow: "hidden", background: "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <input {...getInputProps()} />
 
-        {toast && (
-          <div style={{ position: "absolute", top: 16, left: "50%", transform: "translateX(-50%)", zIndex: 50, display: "flex", alignItems: "center", gap: 10, background: "#111827", color: "#fff", fontSize: 13, fontWeight: 600, padding: "10px 18px", borderRadius: 16, boxShadow: "0 8px 32px rgba(0,0,0,.3)" }}>
-            <Check size={14} color="#4ade80" /> Image saved! Upload it in Canva
-            <button onClick={() => setToast(false)} style={{ background: "none", border: "none", color: "#9ca3af", cursor: "pointer" }}><X size={13} /></button>
-          </div>
-        )}
-        {errMsg && (
-          <div style={{ position: "absolute", top: 16, left: "50%", transform: "translateX(-50%)", zIndex: 50, display: "flex", alignItems: "center", gap: 10, background: "#ef4444", color: "#fff", fontSize: 13, fontWeight: 600, padding: "10px 18px", borderRadius: 16, boxShadow: "0 8px 32px rgba(0,0,0,.3)", whiteSpace: "nowrap" }}>
-            <AlertCircle size={14} /> {errMsg}
-            <button onClick={() => setErrMsg(null)} style={{ background: "none", border: "none", color: "rgba(255,255,255,.7)", cursor: "pointer" }}><X size={13} /></button>
-          </div>
-        )}
-
-        {/* Main image display */}
-        {active ? (
-          brush && active.resultBlob ? (
-            <BrushEditor resultBlob={active.resultBlob} originalSrc={active.origUrl}
-              onDone={async edited => {
-                const url = URL.createObjectURL(edited);
-                const prev = { url: active.resultUrl!, blob: active.resultBlob! };
-                upd(active.id, { resultBlob: edited, resultUrl: url, undoStack: [...active.undoStack, prev].slice(-10), redoStack: [] });
-                await persist({ ...active }, edited); setBrush(false);
-              }}
-              onCancel={() => setBrush(false)} />
-          ) : active.stage === "done" && active.resultUrl ? (
-            <div style={{ padding: 32, paddingRight: panelOpen ? 320 : 32, display: "flex", alignItems: "center", justifyContent: "center", width: "100%", height: "100%", boxSizing: "border-box", transition: "padding .2s" }}>
-              <div style={{ position: "relative", borderRadius: 12, overflow: "hidden", boxShadow: active.shadow ? "0 20px 60px rgba(0,0,0,.5), 0 8px 40px rgba(0,0,0,.2)" : "0 8px 40px rgba(0,0,0,.12)" }}>
-                {/* Background layer */}
-                {active.bgPhotoUrl ? (
-                  <div style={{ position: "absolute", inset: 0, backgroundImage: `url(${active.bgPhotoUrl})`, backgroundSize: "cover", backgroundPosition: "center", filter: active.blurBg > 0 ? `blur(${active.blurBg * 2}px)` : undefined, transform: active.blurBg > 0 ? "scale(1.08)" : undefined }} />
-                ) : active.bgColor ? (
-                  <div style={{ position: "absolute", inset: 0, background: active.bgColor }} />
-                ) : (
-                  <div className="checker" style={{ position: "absolute", inset: 0 }} />
-                )}
-                <img src={active.resultUrl} alt="Result"
-                  style={{ display: "block", position: "relative",
-                    maxWidth: "min(520px, calc(100vw - 80px))",
-                    maxHeight: "calc(100vh - 260px)",
-                    width: "auto", height: "auto",
-                    filter: `brightness(${active.brightness}%) contrast(${active.contrast}%)`,
-                    transform: `scaleX(${active.flipH ? -1 : 1}) scaleY(${active.flipV ? -1 : 1})` }} />
-              </div>
+          {isDragActive && (
+            <div style={{ position: "absolute", inset: 16, zIndex: 40, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(245,243,255,.95)", border: "2px dashed #7c3aed", borderRadius: 20 }}>
+              <p style={{ color: "#6d28d9", fontWeight: 800, fontSize: 16 }}>Drop to add images</p>
             </div>
-          ) : active.stage === "processing" ? (
-            <div style={{ padding: 32, paddingRight: panelOpen ? 320 : 32, display: "flex", alignItems: "center", justifyContent: "center", width: "100%", height: "100%", boxSizing: "border-box" }}>
-              <div style={{ position: "relative", borderRadius: 12, overflow: "hidden", boxShadow: "0 8px 40px rgba(0,0,0,.12)", maxWidth: "100%", maxHeight: "calc(100vh - 64px - 52px - 72px - 64px)" }}>
-                <img src={active.origUrl} alt="Processing" style={{ display: "block", maxWidth: "100%", maxHeight: "calc(100vh - 64px - 52px - 72px - 64px)", width: "auto", height: "auto" }} />
-                <div style={{ position: "absolute", inset: 0, background: "rgba(255,255,255,0.8)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12 }}>
-                  <Loader2 size={32} color="#2563eb" className="animate-spin" />
-                  <div style={{ width: 160, height: 5, background: "#e5e7eb", borderRadius: 99, overflow: "hidden" }}>
-                    <div style={{ height: "100%", width: `${active.progress}%`, background: "#2563eb", borderRadius: 99, transition: "width .3s" }} />
-                  </div>
-                  <p style={{ fontSize: 12, fontWeight: 700, color: "#1d4ed8" }}>{active.progress}%</p>
+          )}
+
+          {toast && (
+            <div style={{ position: "absolute", top: 16, left: "50%", transform: "translateX(-50%)", zIndex: 50, display: "flex", alignItems: "center", gap: 10, background: "#111827", color: "#fff", fontSize: 13, fontWeight: 600, padding: "10px 18px", borderRadius: 16, boxShadow: "0 8px 32px rgba(0,0,0,.3)" }}>
+              <Check size={14} color="#4ade80" /> Image saved! Upload it in Canva
+              <button onClick={() => setToast(false)} style={{ background: "none", border: "none", color: "#9ca3af", cursor: "pointer" }}><X size={13} /></button>
+            </div>
+          )}
+          {errMsg && (
+            <div style={{ position: "absolute", top: 16, left: "50%", transform: "translateX(-50%)", zIndex: 50, display: "flex", alignItems: "center", gap: 10, background: "#ef4444", color: "#fff", fontSize: 13, fontWeight: 600, padding: "10px 18px", borderRadius: 16, boxShadow: "0 8px 32px rgba(0,0,0,.3)", whiteSpace: "nowrap" }}>
+              <AlertCircle size={14} /> {errMsg}
+              <button onClick={() => setErrMsg(null)} style={{ background: "none", border: "none", color: "rgba(255,255,255,.7)", cursor: "pointer" }}><X size={13} /></button>
+            </div>
+          )}
+
+          {/* Image display */}
+          {active ? (
+            brush && active.resultBlob ? (
+              <BrushEditor resultBlob={active.resultBlob} originalSrc={active.origUrl}
+                onDone={async edited => {
+                  const url = URL.createObjectURL(edited);
+                  const prev = { url: active.resultUrl!, blob: active.resultBlob! };
+                  upd(active.id, { resultBlob: edited, resultUrl: url, undoStack: [...active.undoStack, prev].slice(-10), redoStack: [] });
+                  await persist({ ...active }, edited); setBrush(false);
+                }}
+                onCancel={() => setBrush(false)} />
+            ) : active.stage === "done" && active.resultUrl ? (
+              <div style={{ padding: 32, display: "flex", alignItems: "center", justifyContent: "center", width: "100%", height: "100%", boxSizing: "border-box" }}>
+                <div style={{ position: "relative", borderRadius: 16, overflow: "hidden", boxShadow: active.shadow ? "0 20px 60px rgba(0,0,0,.4), 0 8px 40px rgba(0,0,0,.15)" : "0 4px 24px rgba(0,0,0,.1)", border: "1px solid rgba(0,0,0,.06)" }}>
+                  {active.bgPhotoUrl ? (
+                    <div style={{ position: "absolute", inset: 0, backgroundImage: `url(${active.bgPhotoUrl})`, backgroundSize: "cover", backgroundPosition: "center", filter: active.blurBg > 0 ? `blur(${active.blurBg * 2}px)` : undefined, transform: active.blurBg > 0 ? "scale(1.08)" : undefined }} />
+                  ) : active.bgColor ? (
+                    <div style={{ position: "absolute", inset: 0, background: active.bgColor }} />
+                  ) : (
+                    <div className="checker" style={{ position: "absolute", inset: 0 }} />
+                  )}
+                  <img src={active.resultUrl} alt="Result"
+                    style={{ display: "block", position: "relative",
+                      maxWidth: "min(520px, calc(100% - 64px))",
+                      maxHeight: "calc(100vh - 260px)",
+                      width: "auto", height: "auto",
+                      filter: `brightness(${active.brightness}%) contrast(${active.contrast}%)`,
+                      transform: `scaleX(${active.flipH ? -1 : 1}) scaleY(${active.flipV ? -1 : 1})` }} />
                 </div>
               </div>
-            </div>
-          ) : active.stage === "error" ? (
-            <div style={{ textAlign: "center", padding: 40 }}>
-              <div style={{ width: 60, height: 60, borderRadius: 16, background: "#fef2f2", border: "1px solid #fecaca", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px" }}>
-                <AlertCircle size={26} color="#ef4444" />
+            ) : active.stage === "processing" ? (
+              <div style={{ padding: 32, display: "flex", alignItems: "center", justifyContent: "center", width: "100%", height: "100%", boxSizing: "border-box" }}>
+                <div style={{ position: "relative", borderRadius: 16, overflow: "hidden", boxShadow: "0 4px 24px rgba(0,0,0,.1)", border: "1px solid rgba(0,0,0,.06)" }}>
+                  <img src={active.origUrl} alt="Processing" style={{ display: "block", maxWidth: "min(520px, calc(100vw - 64px))", maxHeight: "calc(100vh - 260px)", width: "auto", height: "auto" }} />
+                  <div style={{ position: "absolute", inset: 0, background: "rgba(255,255,255,0.85)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12 }}>
+                    <Loader2 size={32} color="#111827" className="animate-spin" />
+                    <div style={{ width: 160, height: 4, background: "#e5e7eb", borderRadius: 99, overflow: "hidden" }}>
+                      <div style={{ height: "100%", width: `${active.progress}%`, background: "#111827", borderRadius: 99, transition: "width .3s" }} />
+                    </div>
+                    <p style={{ fontSize: 12, fontWeight: 700, color: "#374151" }}>{active.progress}%</p>
+                  </div>
+                </div>
               </div>
-              <p style={{ color: "#dc2626", fontWeight: 700, marginBottom: 14 }}>{active.error}</p>
-              <button onClick={() => process(active)} style={{ padding: "8px 20px", borderRadius: 10, border: "1.5px solid #e5e7eb", background: "transparent", color: "#374151", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>Retry</button>
-            </div>
+            ) : active.stage === "error" ? (
+              <div style={{ textAlign: "center", padding: 40 }}>
+                <div style={{ width: 60, height: 60, borderRadius: 16, background: "#fef2f2", border: "1px solid #fecaca", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px" }}>
+                  <AlertCircle size={26} color="#ef4444" />
+                </div>
+                <p style={{ color: "#dc2626", fontWeight: 700, marginBottom: 14 }}>{active.error}</p>
+                <button onClick={() => process(active)} style={{ padding: "8px 20px", borderRadius: 10, border: "1.5px solid #e5e7eb", background: "transparent", color: "#374151", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>Retry</button>
+              </div>
+            ) : (
+              <div style={{ textAlign: "center", color: "#c4c9d4" }}>
+                <Loader2 size={26} color="#c4c9d4" className="animate-spin" style={{ margin: "0 auto 8px" }} />
+                <p style={{ fontSize: 13 }}>Queued…</p>
+              </div>
+            )
           ) : (
             <div style={{ textAlign: "center", color: "#c4c9d4" }}>
-              <Loader2 size={26} color="#c4c9d4" className="animate-spin" style={{ margin: "0 auto 8px" }} />
-              <p style={{ fontSize: 13 }}>Queued…</p>
+              <p style={{ fontSize: 13 }}>Select an image from the strip below</p>
             </div>
-          )
-        ) : (
-          <div style={{ textAlign: "center", color: "#c4c9d4" }}>
-            <p style={{ fontSize: 13 }}>Select an image from the strip below</p>
-          </div>
-        )}
+          )}
+        </div>
 
-        {/* ── FLOATING RIGHT PANEL ──────────────────────────────────────── */}
+        {/* ── RIGHT SIDE PANEL (flex item, not absolute) ───────────────── */}
         {panelOpen && (
-          <div style={{ position: "absolute", right: 20, top: 20, width: 280, background: "#fff", border: "1px solid #e5e7eb", borderRadius: 16, boxShadow: "0 8px 32px rgba(0,0,0,.1)", display: "flex", flexDirection: "column", maxHeight: "calc(100% - 40px)", overflow: "hidden", zIndex: 30 }}>
+          <div style={{ width: 288, flexShrink: 0, background: "#fff", borderLeft: "1px solid #e5e7eb", display: "flex", flexDirection: "column", overflow: "hidden" }}>
 
             {/* Panel header */}
             <div style={{ padding: "12px 16px", borderBottom: "1px solid #f3f4f6", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
@@ -793,7 +796,7 @@ export default function ToolPage() {
             </div>
           </div>
         )}
-      </div>
+      </div>{/* end canvas+panel row */}
 
       {/* ── THUMBNAIL STRIP (remove.bg style — centered row) ────────────── */}
       <div style={{ flexShrink: 0, padding: "10px 16px 12px", display: "flex", justifyContent: "center" }}>
