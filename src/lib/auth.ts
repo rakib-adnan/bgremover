@@ -32,12 +32,19 @@ export const authOptions: NextAuthOptions = {
           );
           const user = await userRes.json();
 
+          // Get credits from custom endpoint
+          const creditsRes = await fetch(
+            `${process.env.WORDPRESS_API_URL}/bgremover/v1/credits`,
+            { headers: { Authorization: `Bearer ${data.token}` } }
+          );
+          const creditsData = creditsRes.ok ? await creditsRes.json() : { credits: 0 };
+
           return {
             id: String(user.id),
-            name: user.name,
+            name: user.name ?? user.display_name,
             email: user.email,
             token: data.token,
-            credits: user.meta?.bg_credits ?? 0,
+            credits: creditsData.credits ?? 0,
             avatar: user.avatar_urls?.["96"] ?? "",
           };
         } catch {

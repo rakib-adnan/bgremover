@@ -7,12 +7,12 @@ export async function POST(req: NextRequest) {
   if (!session)
     return NextResponse.json({ error: "Login required for HD download" }, { status: 401 });
 
-  // Check credits
-  const creditsRes = await fetch(`${process.env.WORDPRESS_API_URL}/wp/v2/users/me?context=edit`, {
+  // Check credits via custom endpoint
+  const creditsRes = await fetch(`${process.env.WORDPRESS_API_URL}/bgremover/v1/credits`, {
     headers: { Authorization: `Bearer ${session.user.wpToken}` },
   });
-  const userData = await creditsRes.json();
-  const credits = parseInt(userData.meta?.bg_credits ?? "0");
+  const creditsData = await creditsRes.json();
+  const credits = creditsData.credits ?? 0;
 
   if (credits < 1)
     return NextResponse.json({ error: "No credits. Please purchase credits." }, { status: 402 });
@@ -39,19 +39,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: err.errors?.[0]?.title ?? "Processing failed" }, { status: 500 });
   }
 
-  // Deduct 1 credit
-  await fetch(`${process.env.WORDPRESS_API_URL}/wp/v2/users/${session.user.id}`, {
+  // Deduct 1 credit via custom endpoint
+  await fetch(`${process.env.WORDPRESS_API_URL}/bgremover/v1/credits/deduct`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${session.user.wpToken}`,
-    },
-    body: JSON.stringify({
-      meta: {
-        bg_credits: String(credits - 1),
-        bg_total_used: String(parseInt(userData.meta?.bg_total_used ?? "0") + 1),
-      },
-    }),
+    headers: { Authorization: `Bearer ${session.user.wpToken}` },
   });
 
   const imageBuffer = await bgRes.arrayBuffer();

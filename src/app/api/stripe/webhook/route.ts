@@ -16,29 +16,16 @@ export async function POST(req: NextRequest) {
 
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session;
-    const { userId, credits, wpToken } = session.metadata!;
+    const { userId, credits } = session.metadata!;
 
-    // Get current credits
-    const userRes = await fetch(
-      `${process.env.WORDPRESS_API_URL}/wp/v2/users/${userId}?context=edit`,
-      {
-        headers: {
-          Authorization: `Basic ${Buffer.from(`bgremove:BgRemove@2026!`).toString("base64")}`,
-        },
-      }
-    );
-    const user = await userRes.json();
-    const current = parseInt(user.meta?.bg_credits ?? "0");
-    const newCredits = current + parseInt(credits);
-
-    // Update credits
-    await fetch(`${process.env.WORDPRESS_API_URL}/wp/v2/users/${userId}`, {
+    // Add credits via custom admin endpoint
+    await fetch(`${process.env.WORDPRESS_API_URL}/bgremover/v1/credits/add`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Basic ${Buffer.from(`bgremove:BgRemove@2026!`).toString("base64")}`,
+        "X-BG-Admin-Key": process.env.WORDPRESS_JWT_SECRET!,
       },
-      body: JSON.stringify({ meta: { bg_credits: String(newCredits) } }),
+      body: JSON.stringify({ user_id: userId, credits: parseInt(credits) }),
     });
   }
 
