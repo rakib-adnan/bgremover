@@ -73,11 +73,19 @@ function mkImg(file: File, order: number): Img {
 }
 
 const BG_COLORS = [
-  { v: null,      s: `repeating-conic-gradient(#e0e0e0 0% 25%,#fff 0% 50%) 0 0/16px 16px` },
-  { v: "#ffffff", s: "#ffffff" }, { v: "#111111", s: "#111111" }, { v: "#1e3a5f", s: "#1e3a5f" },
-  { v: "#dbeafe", s: "#dbeafe" }, { v: "#fce7f3", s: "#fce7f3" }, { v: "#dcfce7", s: "#dcfce7" },
-  { v: "#fef9c3", s: "#fef9c3" }, { v: "#ede9fe", s: "#ede9fe" }, { v: "#ffedd5", s: "#ffedd5" },
-  { v: "#f0f4c3", s: "#f0f4c3" }, { v: "#e0f2fe", s: "#e0f2fe" },
+  { v: null,      s: `repeating-conic-gradient(#d4d4d4 0% 25%,#fff 0% 50%) 0 0/14px 14px` },
+  { v: "#ffffff", s: "#ffffff" }, { v: "#000000", s: "#000000" },
+  { v: "#ef4444", s: "#ef4444" }, { v: "#f97316", s: "#f97316" }, { v: "#eab308", s: "#eab308" },
+  { v: "#22c55e", s: "#22c55e" }, { v: "#06b6d4", s: "#06b6d4" }, { v: "#3b82f6", s: "#3b82f6" },
+  { v: "#8b5cf6", s: "#8b5cf6" }, { v: "#ec4899", s: "#ec4899" }, { v: "#f43f5e", s: "#f43f5e" },
+  { v: "#fb923c", s: "#fb923c" }, { v: "#fbbf24", s: "#fbbf24" }, { v: "#a3e635", s: "#a3e635" },
+  { v: "#34d399", s: "#34d399" }, { v: "#22d3ee", s: "#22d3ee" }, { v: "#60a5fa", s: "#60a5fa" },
+  { v: "#a78bfa", s: "#a78bfa" }, { v: "#f472b6", s: "#f472b6" }, { v: "#fda4af", s: "#fda4af" },
+  { v: "#fed7aa", s: "#fed7aa" }, { v: "#fef08a", s: "#fef08a" }, { v: "#bbf7d0", s: "#bbf7d0" },
+  { v: "#a5f3fc", s: "#a5f3fc" }, { v: "#bfdbfe", s: "#bfdbfe" }, { v: "#ddd6fe", s: "#ddd6fe" },
+  { v: "#fbcfe8", s: "#fbcfe8" }, { v: "#374151", s: "#374151" }, { v: "#6b7280", s: "#6b7280" },
+  { v: "#d1d5db", s: "#d1d5db" }, { v: "#1e3a5f", s: "#1e3a5f" }, { v: "#14532d", s: "#14532d" },
+  { v: "#7f1d1d", s: "#7f1d1d" }, { v: "#4c1d95", s: "#4c1d95" }, { v: "#0c4a6e", s: "#0c4a6e" },
 ];
 
 const TABS: { id: Tab; label: string; Icon: React.ElementType }[] = [
@@ -105,6 +113,7 @@ export default function ToolPage() {
   const [hdLoad, setHdLoad]   = useState(false);
   const [dlOpen, setDlOpen]   = useState(false);
   const [brush, setBrush]     = useState(false);
+  const [bgSubTab, setBgSubTab] = useState<"magic"|"photo"|"color">("color");
   const [toast, setToast]     = useState(false);
   const [ready, setReady]     = useState(false);
   const processing = useRef<Set<string>>(new Set());
@@ -460,7 +469,7 @@ export default function ToolPage() {
       </div>
 
       {/* ── CANVAS + FLOATING PANEL ─────────────────────────────────────── */}
-      <div {...getRootProps()} style={{ flex: 1, position: "relative", overflow: "hidden", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div {...getRootProps()} style={{ flex: 1, position: "relative", overflow: "hidden", background: "#f3f3f3", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <input {...getInputProps()} />
 
         {isDragActive && (
@@ -571,29 +580,72 @@ export default function ToolPage() {
 
               {/* BACKGROUND */}
               {tab === "background" && (
-                <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                  <div>
-                    <p style={{ fontSize: 10, fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 10 }}>Color</p>
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 7 }}>
-                      {BG_COLORS.map(({ v, s }) => (
-                        <button key={String(v)} onClick={() => active && applyBg(active.id, v)}
-                          style={{ aspectRatio: "1", borderRadius: 8, background: s, cursor: "pointer", border: active?.bgColor === v ? "2.5px solid #7c3aed" : "1.5px solid #e5e7eb", boxShadow: active?.bgColor === v ? "0 0 0 3px #ddd6fe" : undefined, transition: "transform .15s" }}
-                          onMouseEnter={e => (e.currentTarget.style.transform = "scale(1.1)")}
-                          onMouseLeave={e => (e.currentTarget.style.transform = "scale(1)")} />
-                      ))}
-                    </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  {/* Subtabs */}
+                  <div style={{ display: "flex", background: "#f3f4f6", borderRadius: 10, padding: 3, gap: 2 }}>
+                    {(["magic","photo","color"] as const).map(t => (
+                      <button key={t} onClick={() => setBgSubTab(t)}
+                        style={{ flex: 1, padding: "5px 0", borderRadius: 8, border: "none", cursor: "pointer", fontSize: 12, fontWeight: bgSubTab === t ? 700 : 500, background: bgSubTab === t ? "#fff" : "transparent", color: bgSubTab === t ? "#111827" : "#6b7280", boxShadow: bgSubTab === t ? "0 1px 4px rgba(0,0,0,.08)" : "none", transition: "all .15s", textTransform: "capitalize" }}>
+                        {t}
+                      </button>
+                    ))}
                   </div>
-                  <div>
-                    <p style={{ fontSize: 10, fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8 }}>Custom</p>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10, background: "#f9fafb", border: "1px solid #e5e7eb", borderRadius: 10, padding: "8px 12px" }}>
-                      <input type="color" defaultValue="#ffffff" onChange={e => active && applyBg(active.id, e.target.value)}
-                        style={{ width: 32, height: 32, borderRadius: 8, border: "none", cursor: "pointer", padding: 0 }} />
-                      <span style={{ fontSize: 12, color: "#6b7280" }}>Pick any color</span>
+
+                  {/* Magic tab - Pro */}
+                  {bgSubTab === "magic" && (
+                    <div style={{ textAlign: "center", padding: "20px 0" }}>
+                      <div style={{ fontSize: 28, marginBottom: 8 }}>✨</div>
+                      <p style={{ fontSize: 13, fontWeight: 700, color: "#111827", marginBottom: 4 }}>AI Generate Background</p>
+                      <p style={{ fontSize: 11, color: "#9ca3af", marginBottom: 14 }}>Describe any background and AI will create it</p>
+                      <Link href="/pricing" style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "9px 20px", borderRadius: 10, background: "linear-gradient(135deg,#7c3aed,#3b82f6)", color: "#fff", fontWeight: 700, fontSize: 12, textDecoration: "none" }}>
+                        <Zap size={12} fill="currentColor" /> Unlock Pro
+                      </Link>
                     </div>
-                  </div>
-                  <button style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "9px 0", borderRadius: 10, border: "1.5px dashed #e5e7eb", background: "transparent", color: "#c4c9d4", fontWeight: 600, fontSize: 12, cursor: "not-allowed" }}>
-                    <Lock size={11} /> Photo background — Pro
-                  </button>
+                  )}
+
+                  {/* Photo tab - Pro locked grid */}
+                  {bgSubTab === "photo" && (
+                    <div>
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6, position: "relative" }}>
+                        {["https://images.pexels.com/photos/1252869/pexels-photo-1252869.jpeg",
+                          "https://images.pexels.com/photos/1287145/pexels-photo-1287145.jpeg",
+                          "https://images.pexels.com/photos/1261728/pexels-photo-1261728.jpeg",
+                          "https://images.pexels.com/photos/1525041/pexels-photo-1525041.jpeg",
+                          "https://images.pexels.com/photos/1266810/pexels-photo-1266810.jpeg",
+                          "https://images.pexels.com/photos/1906658/pexels-photo-1906658.jpeg",
+                        ].map((url, i) => (
+                          <div key={i} style={{ position: "relative", borderRadius: 8, overflow: "hidden", aspectRatio: "1", cursor: "not-allowed" }}>
+                            <img src={`${url}?auto=compress&cs=tinysrgb&w=120`} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                            <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,.35)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                              <Lock size={13} color="#fff" />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <Link href="/pricing" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "9px 0", borderRadius: 10, background: "linear-gradient(135deg,#7c3aed,#3b82f6)", color: "#fff", fontWeight: 700, fontSize: 12, textDecoration: "none", marginTop: 10 }}>
+                        <Zap size={12} fill="currentColor" /> Unlock Photo Backgrounds
+                      </Link>
+                    </div>
+                  )}
+
+                  {/* Color tab */}
+                  {bgSubTab === "color" && (
+                    <>
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 6 }}>
+                        {BG_COLORS.map(({ v, s }) => (
+                          <button key={String(v)} onClick={() => active && applyBg(active.id, v)}
+                            style={{ aspectRatio: "1", borderRadius: 7, background: s, cursor: "pointer", border: active?.bgColor === v ? "2.5px solid #2563eb" : "1.5px solid rgba(0,0,0,.08)", boxShadow: active?.bgColor === v ? "0 0 0 3px #bfdbfe" : undefined, transition: "transform .15s" }}
+                            onMouseEnter={e => (e.currentTarget.style.transform = "scale(1.12)")}
+                            onMouseLeave={e => (e.currentTarget.style.transform = "scale(1)")} />
+                        ))}
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10, background: "#f9fafb", border: "1px solid #e5e7eb", borderRadius: 10, padding: "8px 12px" }}>
+                        <input type="color" defaultValue="#ffffff" onChange={e => active && applyBg(active.id, e.target.value)}
+                          style={{ width: 30, height: 30, borderRadius: 7, border: "none", cursor: "pointer", padding: 0 }} />
+                        <span style={{ fontSize: 12, color: "#6b7280" }}>Custom color</span>
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
 
