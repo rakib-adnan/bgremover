@@ -29,7 +29,15 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" style={{ colorScheme: "dark" }}>
+      <head>
+        <meta name="color-scheme" content="dark" />
+        <meta name="theme-color" content="#0a0a14" />
+        <style>{`
+          :root { color-scheme: dark; }
+          html, body { background-color: #0a0a14 !important; color: white !important; }
+        `}</style>
+      </head>
       <body className={`${geist.className} bg-[#0a0a14] text-white`}>
         <Providers>
           <Navbar />
