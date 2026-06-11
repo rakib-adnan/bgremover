@@ -1,5 +1,5 @@
 "use client";
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useDropzone } from "react-dropzone";
 import Link from "next/link";
@@ -7,7 +7,7 @@ import {
   Upload, Download, Loader2, AlertCircle, Zap, Lock, Plus,
   ChevronDown, Undo2, Redo2, FlipHorizontal, FlipVertical,
   Scissors, ImageIcon, Sparkles, Sliders, LayoutTemplate,
-  X, RotateCcw, Paintbrush, Check, ExternalLink
+  X, RotateCcw, Paintbrush, Check, ExternalLink, ArrowLeft
 } from "lucide-react";
 import { removeBackground } from "@imgly/background-removal";
 import BrushEditor from "@/components/BrushEditor";
@@ -55,11 +55,11 @@ const BG_COLORS = [
   { label: "Transparent", value: null },
   { label: "White",  value: "#ffffff" },
   { label: "Black",  value: "#000000" },
+  { label: "Navy",   value: "#1e3a5f" },
   { label: "Blue",   value: "#dbeafe" },
   { label: "Pink",   value: "#fce7f3" },
   { label: "Green",  value: "#dcfce7" },
   { label: "Yellow", value: "#fef9c3" },
-  { label: "Gray",   value: "#f3f4f6" },
 ];
 
 export default function ToolPage() {
@@ -73,8 +73,20 @@ export default function ToolPage() {
   const [brushActive, setBrushActive] = useState(false);
   const [canvaToast, setCanvaToast] = useState(false);
   const processingRef = useRef<Set<string>>(new Set());
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const active = images.find(i => i.id === activeId) ?? null;
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setDownloadOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
 
   function updateItem(id: string, patch: Partial<ImageItem>) {
     setImages(prev => prev.map(i => i.id === id ? { ...i, ...patch } : i));
@@ -117,13 +129,9 @@ export default function ToolPage() {
       });
       const compressed = await compressBlob(rawBlob, item.bgColor, item.flipH, item.flipV);
       const url = URL.createObjectURL(compressed);
-      updateItem(item.id, {
-        stage: "done", progress: 100,
-        resultBlob: compressed, resultUrl: url,
-        undoStack: [], redoStack: [],
-      });
+      updateItem(item.id, { stage: "done", progress: 100, resultBlob: compressed, resultUrl: url, undoStack: [], redoStack: [] });
     } catch {
-      updateItem(item.id, { stage: "error", error: "Processing failed. Please try another image." });
+      updateItem(item.id, { stage: "error", error: "Processing failed. Try another image." });
     }
     processingRef.current.delete(item.id);
   }
@@ -131,10 +139,7 @@ export default function ToolPage() {
   const onDrop = useCallback((files: File[]) => {
     const valid = files.filter(f => f.size <= 12 * 1024 * 1024);
     const newItems = valid.map(makeItem);
-    setImages(prev => {
-      const next = [...prev, ...newItems];
-      return next;
-    });
+    setImages(prev => [...prev, ...newItems]);
     if (!activeId && newItems.length > 0) setActiveId(newItems[0].id);
     newItems.forEach(item => processItem(item));
   }, [activeId]);
@@ -145,67 +150,47 @@ export default function ToolPage() {
 
   async function applyBackground(id: string, color: string | null) {
     const item = images.find(i => i.id === id);
-    if (!item || !item.resultBlob) return;
-    // Push current to undo stack
+    if (!item?.resultBlob) return;
     const prev = { url: item.resultUrl!, blob: item.resultBlob };
     updateItem(id, { bgColor: color });
-    const originalRaw = await removeBackground(item.file, { progress: () => {} });
-    const compressed = await compressBlob(originalRaw, color, item.flipH, item.flipV);
+    const raw = await removeBackground(item.file, { progress: () => {} });
+    const compressed = await compressBlob(raw, color, item.flipH, item.flipV);
     const url = URL.createObjectURL(compressed);
-    updateItem(id, {
-      resultBlob: compressed, resultUrl: url,
-      undoStack: [...item.undoStack, prev].slice(-10),
-      redoStack: [],
-    });
+    updateItem(id, { resultBlob: compressed, resultUrl: url, bgColor: color, undoStack: [...item.undoStack, prev].slice(-10), redoStack: [] });
   }
 
   async function applyFlip(id: string, axis: "h" | "v") {
     const item = images.find(i => i.id === id);
-    if (!item || !item.resultBlob) return;
+    if (!item?.resultBlob) return;
     const prev = { url: item.resultUrl!, blob: item.resultBlob };
-    const newFlipH = axis === "h" ? !item.flipH : item.flipH;
-    const newFlipV = axis === "v" ? !item.flipV : item.flipV;
-    const originalRaw = await removeBackground(item.file, { progress: () => {} });
-    const compressed = await compressBlob(originalRaw, item.bgColor, newFlipH, newFlipV);
+    const newH = axis === "h" ? !item.flipH : item.flipH;
+    const newV = axis === "v" ? !item.flipV : item.flipV;
+    const raw = await removeBackground(item.file, { progress: () => {} });
+    const compressed = await compressBlob(raw, item.bgColor, newH, newV);
     const url = URL.createObjectURL(compressed);
-    updateItem(id, {
-      flipH: newFlipH, flipV: newFlipV,
-      resultBlob: compressed, resultUrl: url,
-      undoStack: [...item.undoStack, prev].slice(-10),
-      redoStack: [],
-    });
+    updateItem(id, { flipH: newH, flipV: newV, resultBlob: compressed, resultUrl: url, undoStack: [...item.undoStack, prev].slice(-10), redoStack: [] });
   }
 
   function undo(id: string) {
     const item = images.find(i => i.id === id);
     if (!item || item.undoStack.length === 0) return;
     const prev = item.undoStack[item.undoStack.length - 1];
-    const current = { url: item.resultUrl!, blob: item.resultBlob! };
-    updateItem(id, {
-      resultUrl: prev.url, resultBlob: prev.blob,
-      undoStack: item.undoStack.slice(0, -1),
-      redoStack: [...item.redoStack, current],
-    });
+    updateItem(id, { resultUrl: prev.url, resultBlob: prev.blob, undoStack: item.undoStack.slice(0, -1), redoStack: [...item.redoStack, { url: item.resultUrl!, blob: item.resultBlob! }] });
   }
 
   function redo(id: string) {
     const item = images.find(i => i.id === id);
     if (!item || item.redoStack.length === 0) return;
     const next = item.redoStack[item.redoStack.length - 1];
-    const current = { url: item.resultUrl!, blob: item.resultBlob! };
-    updateItem(id, {
-      resultUrl: next.url, resultBlob: next.blob,
-      redoStack: item.redoStack.slice(0, -1),
-      undoStack: [...item.undoStack, current],
-    });
+    updateItem(id, { resultUrl: next.url, resultBlob: next.blob, redoStack: item.redoStack.slice(0, -1), undoStack: [...item.undoStack, { url: item.resultUrl!, blob: item.resultBlob! }] });
   }
 
-  function downloadFree(item: ImageItem) {
-    if (!item.resultBlob) return;
-    const url = URL.createObjectURL(item.resultBlob);
+  function downloadFree(item?: ImageItem | null) {
+    const target = item ?? active;
+    if (!target?.resultBlob) return;
+    const url = URL.createObjectURL(target.resultBlob);
     const a = document.createElement("a");
-    a.href = url; a.download = `${item.file.name.replace(/\.[^.]+$/, "")}-no-bg.png`;
-    a.click();
+    a.href = url; a.download = `${target.file.name.replace(/\.[^.]+$/, "")}-no-bg.png`; a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
@@ -215,9 +200,7 @@ export default function ToolPage() {
     if (done.length === 1) { downloadFree(done[0]); return; }
     const JSZip = (await import("jszip")).default;
     const zip = new JSZip();
-    done.forEach(item => {
-      zip.file(`${item.file.name.replace(/\.[^.]+$/, "")}-no-bg.png`, item.resultBlob!);
-    });
+    done.forEach(item => zip.file(`${item.file.name.replace(/\.[^.]+$/, "")}-no-bg.png`, item.resultBlob!));
     const blob = await zip.generateAsync({ type: "blob" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a"); a.href = url; a.download = "backgrounds-removed.zip"; a.click();
@@ -231,14 +214,12 @@ export default function ToolPage() {
       const form = new FormData();
       form.append("image", active.file);
       const res = await fetch("/api/remove-bg", { method: "POST", body: form });
-      if (res.status === 402) { setHdLoading(false); return; }
       if (!res.ok) { setHdLoading(false); return; }
       const remaining = res.headers.get("X-Credits-Remaining");
       if (remaining) setCredits(parseInt(remaining));
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
-      const a = document.createElement("a"); a.href = url;
-      a.download = `${active.file.name.replace(/\.[^.]+$/, "")}-hd-no-bg.png`; a.click();
+      const a = document.createElement("a"); a.href = url; a.download = `${active.file.name.replace(/\.[^.]+$/, "")}-hd.png`; a.click();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch {}
     setHdLoading(false);
@@ -246,13 +227,12 @@ export default function ToolPage() {
 
   function editInCanva() {
     if (!active?.resultBlob) return;
-    // Download image then open Canva
     downloadFree(active);
     setTimeout(() => {
       window.open("https://www.canva.com/photo-editor/", "_blank");
       setCanvaToast(true);
       setTimeout(() => setCanvaToast(false), 5000);
-    }, 500);
+    }, 400);
   }
 
   function removeImage(id: string) {
@@ -265,7 +245,7 @@ export default function ToolPage() {
 
   const doneCount = images.filter(i => i.stage === "done").length;
 
-  // EMPTY STATE
+  // ── EMPTY STATE ───────────────────────────────────────────────────────────
   if (images.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -284,124 +264,150 @@ export default function ToolPage() {
             </Link>
           )}
         </div>
-
         <div className="flex-1 flex items-center justify-center p-8">
           <div {...getRootProps()}
-            className={`w-full max-w-2xl border-2 border-dashed rounded-3xl p-20 text-center cursor-pointer transition-all ${
-              isDragActive ? "border-violet-500 bg-violet-50 scale-[1.01]" : "border-gray-300 bg-white hover:border-violet-400 hover:bg-violet-50/40"
-            }`}
-            onClick={openPicker}>
+            onClick={openPicker}
+            className={`w-full max-w-2xl border-2 border-dashed rounded-3xl p-16 text-center cursor-pointer transition-all ${
+              isDragActive ? "border-violet-500 bg-violet-50" : "border-gray-300 bg-white hover:border-violet-400 hover:bg-violet-50/40"
+            }`}>
             <input {...getInputProps()} />
-            <div className="w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-5"
-              style={{ background: "#7c3aed18" }}>
+            <div className="w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-5" style={{ background: "#7c3aed18" }}>
               <Upload size={34} style={{ color: "#7c3aed" }} />
             </div>
-            <h2 className="text-2xl font-black text-gray-900 mb-2">
-              {isDragActive ? "Drop images here!" : "Drop your image here"}
-            </h2>
-            <p className="text-gray-500 mb-6">or click to browse · JPG, PNG, WEBP · Max 12MB each</p>
+            <h2 className="text-2xl font-black text-gray-900 mb-2">{isDragActive ? "Drop images here!" : "Drop your image here"}</h2>
+            <p className="text-gray-500 mb-6">or click to browse · JPG, PNG, WEBP · Max 12MB · Multiple images supported</p>
             <div className="inline-flex items-center gap-2 btn-primary text-white font-black px-8 py-3.5 rounded-xl">
               <Upload size={17} /> Choose Image
             </div>
-            <p className="text-xs text-gray-400 mt-4">✓ Multiple images supported · ✓ No watermarks · ✓ Free forever</p>
+            <p className="text-xs text-gray-400 mt-4">✓ Free forever · ✓ No watermarks · ✓ No sign-up needed</p>
           </div>
         </div>
       </div>
     );
   }
 
-  // EDITOR STATE
+  // ── EDITOR STATE ──────────────────────────────────────────────────────────
+  const TABS: { id: EditorTab; label: string; icon: React.ElementType }[] = [
+    { id: "cutout",     label: "Cutout",     icon: Scissors },
+    { id: "background", label: "Background", icon: ImageIcon },
+    { id: "effects",    label: "Effects",    icon: Sparkles },
+    { id: "adjust",     label: "Adjust",     icon: Sliders },
+    { id: "design",     label: "Design",     icon: LayoutTemplate },
+  ];
+
   return (
-    <div className="min-h-screen bg-[#f7f7f8] flex flex-col" style={{ height: "100dvh" }}>
+    <div className="flex flex-col bg-[#f0f0f2]" style={{ height: "100vh" }}>
 
-      {/* Top bar */}
-      <div className="bg-white border-b border-gray-200 flex-shrink-0">
-        <div className="flex items-center gap-2 px-4 py-2 overflow-x-auto">
+      {/* ── TOP EDITOR BAR ─────────────────────────────── */}
+      <div className="bg-white border-b border-gray-200 flex-shrink-0 flex items-center px-3 py-2 gap-2">
 
-          {/* Tabs */}
-          <div className="flex items-center gap-1 flex-1">
-            {([
-              { id: "cutout",     label: "Cutout",     icon: Scissors },
-              { id: "background", label: "Background", icon: ImageIcon },
-              { id: "effects",    label: "Effects",    icon: Sparkles },
-              { id: "adjust",     label: "Adjust",     icon: Sliders },
-              { id: "design",     label: "Design",     icon: LayoutTemplate },
-            ] as { id: EditorTab; label: string; icon: React.ElementType }[]).map(({ id, label, icon: Icon }) => (
-              <button key={id} onClick={() => setTab(id)}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold whitespace-nowrap transition-all ${
-                  tab === id
-                    ? "bg-violet-100 text-violet-700"
-                    : "text-gray-500 hover:text-gray-800 hover:bg-gray-100"
-                }`}>
-                <Icon size={14} /> {label}
-              </button>
-            ))}
-          </div>
+        {/* Back link */}
+        <Link href="/" className="flex items-center gap-1.5 text-gray-400 hover:text-gray-700 text-sm font-bold transition mr-1 flex-shrink-0">
+          <ArrowLeft size={15} />
+        </Link>
 
-          <div className="w-px h-6 bg-gray-200 flex-shrink-0" />
+        <div className="w-px h-5 bg-gray-200 flex-shrink-0" />
 
-          {/* Undo / Redo */}
+        {/* Editor tabs */}
+        <div className="flex items-center gap-0.5 flex-1 min-w-0">
+          {TABS.map(({ id, label, icon: Icon }) => (
+            <button key={id} onClick={() => setTab(id)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-bold whitespace-nowrap transition-all flex-shrink-0 ${
+                tab === id ? "bg-violet-100 text-violet-700" : "text-gray-500 hover:text-gray-800 hover:bg-gray-100"
+              }`}>
+              <Icon size={14} /> {label}
+            </button>
+          ))}
+        </div>
+
+        {/* Right side — never overflow */}
+        <div className="flex items-center gap-1.5 flex-shrink-0">
+          <div className="w-px h-5 bg-gray-200" />
+
           <button onClick={() => active && undo(active.id)} disabled={!active || active.undoStack.length === 0}
-            title="Undo" className="p-2 rounded-lg text-gray-500 hover:text-gray-800 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition">
+            title="Undo"
+            className="p-1.5 rounded-lg text-gray-500 hover:text-gray-800 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition">
             <Undo2 size={16} />
           </button>
           <button onClick={() => active && redo(active.id)} disabled={!active || active.redoStack.length === 0}
-            title="Redo" className="p-2 rounded-lg text-gray-500 hover:text-gray-800 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition">
+            title="Redo"
+            className="p-1.5 rounded-lg text-gray-500 hover:text-gray-800 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition">
             <Redo2 size={16} />
           </button>
 
-          <div className="w-px h-6 bg-gray-200 flex-shrink-0" />
+          <div className="w-px h-5 bg-gray-200" />
 
-          {/* Credits */}
           {session && (
-            <div className="flex items-center gap-1.5 bg-violet-50 border border-violet-200 px-3 py-1.5 rounded-full text-sm font-bold text-violet-700 flex-shrink-0">
-              <Zap size={12} fill="currentColor" /> {credits} HD
+            <div className="flex items-center gap-1 bg-violet-50 border border-violet-200 px-2.5 py-1 rounded-full text-xs font-bold text-violet-700">
+              <Zap size={11} fill="currentColor" /> {credits}
             </div>
           )}
 
-          {/* Download button */}
-          <div className="relative flex-shrink-0">
-            <button onClick={() => setDownloadOpen(o => !o)}
-              className="flex items-center gap-2 btn-primary text-white text-sm font-black px-4 py-2 rounded-xl">
-              <Download size={15} />
+          {/* Download — outside overflow container so dropdown never clips */}
+          <div className="relative" ref={dropdownRef}>
+            <button
+              onClick={() => setDownloadOpen(o => !o)}
+              className="flex items-center gap-1.5 text-sm font-black text-white px-4 py-1.5 rounded-xl transition"
+              style={{ background: "linear-gradient(135deg,#7c3aed,#6d28d9)" }}>
+              <Download size={14} />
               Download
-              <ChevronDown size={13} className={`transition-transform ${downloadOpen ? "rotate-180" : ""}`} />
+              <ChevronDown size={13} className={`transition-transform duration-200 ${downloadOpen ? "rotate-180" : ""}`} />
             </button>
+
             {downloadOpen && (
-              <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-2xl shadow-xl z-50 overflow-hidden w-56"
-                onMouseLeave={() => setDownloadOpen(false)}>
-                <button onClick={() => { active && downloadFree(active); setDownloadOpen(false); }}
+              <div className="absolute right-0 top-[calc(100%+6px)] w-60 bg-white rounded-2xl border border-gray-200 overflow-hidden z-[999]"
+                style={{ boxShadow: "0 8px 32px rgba(0,0,0,0.15)" }}>
+
+                <button
+                  onClick={() => { downloadFree(); setDownloadOpen(false); }}
                   disabled={!active || active.stage !== "done"}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition text-left">
-                  <Download size={15} className="text-gray-400" />
+                  className="w-full flex items-start gap-3 px-4 py-3.5 text-left hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition">
+                  <Download size={16} className="text-gray-400 mt-0.5 flex-shrink-0" />
                   <div>
-                    <div>Download Free PNG</div>
-                    <div className="text-xs text-gray-400 font-normal">Optimised · No watermark</div>
+                    <div className="text-sm font-bold text-gray-800">Free PNG Download</div>
+                    <div className="text-xs text-gray-400 mt-0.5">Optimised · No watermark</div>
                   </div>
                 </button>
-                {session && credits > 0 ? (
-                  <button onClick={() => { downloadHD(); setDownloadOpen(false); }}
-                    disabled={hdLoading || !active || active.stage !== "done"}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-violet-700 hover:bg-violet-50 disabled:opacity-40 transition text-left border-t border-gray-100">
-                    {hdLoading ? <Loader2 size={15} className="animate-spin" /> : <Zap size={15} />}
+
+                {!session ? (
+                  <Link href="/auth/signup" onClick={() => setDownloadOpen(false)}
+                    className="flex items-start gap-3 px-4 py-3.5 hover:bg-violet-50 border-t border-gray-100 transition">
+                    <Lock size={16} className="text-violet-500 mt-0.5 flex-shrink-0" />
                     <div>
-                      <div>Download HD PNG</div>
-                      <div className="text-xs text-violet-400 font-normal">Full resolution · 1 credit</div>
+                      <div className="text-sm font-bold text-violet-700">Sign Up for HD</div>
+                      <div className="text-xs text-violet-400 mt-0.5">3 free HD downloads/day</div>
+                    </div>
+                  </Link>
+                ) : credits > 0 ? (
+                  <button
+                    onClick={() => { downloadHD(); setDownloadOpen(false); }}
+                    disabled={hdLoading || !active || active.stage !== "done"}
+                    className="w-full flex items-start gap-3 px-4 py-3.5 text-left hover:bg-violet-50 border-t border-gray-100 disabled:opacity-40 transition">
+                    {hdLoading ? <Loader2 size={16} className="animate-spin text-violet-500 mt-0.5 flex-shrink-0" /> : <Zap size={16} className="text-violet-500 mt-0.5 flex-shrink-0" />}
+                    <div>
+                      <div className="text-sm font-bold text-violet-700">HD Download</div>
+                      <div className="text-xs text-violet-400 mt-0.5">Full resolution · 1 credit</div>
                     </div>
                   </button>
-                ) : !session ? (
-                  <Link href="/auth/signup"
-                    className="flex items-center gap-3 px-4 py-3 text-sm font-bold text-violet-700 hover:bg-violet-50 border-t border-gray-100">
-                    <Lock size={15} /> Sign Up for HD
-                  </Link>
-                ) : null}
-                {doneCount > 1 && (
-                  <button onClick={() => { downloadAllZip(); setDownloadOpen(false); }}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-gray-700 hover:bg-gray-50 border-t border-gray-100 transition text-left">
-                    <Download size={15} className="text-emerald-500" />
+                ) : (
+                  <Link href="/pricing" onClick={() => setDownloadOpen(false)}
+                    className="flex items-start gap-3 px-4 py-3.5 hover:bg-violet-50 border-t border-gray-100 transition">
+                    <Zap size={16} className="text-violet-500 mt-0.5 flex-shrink-0" />
                     <div>
-                      <div>Download All ({doneCount}) as ZIP</div>
-                      <div className="text-xs text-gray-400 font-normal">All processed images</div>
+                      <div className="text-sm font-bold text-violet-700">Buy Credits</div>
+                      <div className="text-xs text-violet-400 mt-0.5">Unlock HD downloads</div>
+                    </div>
+                  </Link>
+                )}
+
+                {doneCount > 1 && (
+                  <button
+                    onClick={() => { downloadAllZip(); setDownloadOpen(false); }}
+                    className="w-full flex items-start gap-3 px-4 py-3.5 text-left hover:bg-emerald-50 border-t border-gray-100 transition">
+                    <Download size={16} className="text-emerald-500 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <div className="text-sm font-bold text-emerald-700">Download All as ZIP</div>
+                      <div className="text-xs text-emerald-500 mt-0.5">{doneCount} images bundled</div>
                     </div>
                   </button>
                 )}
@@ -411,311 +417,284 @@ export default function ToolPage() {
         </div>
       </div>
 
-      {/* Main editor area */}
-      <div className="flex-1 flex min-h-0">
+      {/* ── MAIN BODY ──────────────────────────────────── */}
+      <div className="flex flex-1 min-h-0">
 
         {/* Left panel */}
-        <div className="w-72 flex-shrink-0 bg-white border-r border-gray-200 overflow-y-auto">
+        <div className="w-64 flex-shrink-0 bg-white border-r border-gray-200 overflow-y-auto">
 
           {tab === "cutout" && (
-            <div className="p-5">
-              <h3 className="text-sm font-black text-gray-900 mb-4">Cutout</h3>
+            <div className="p-4">
+              <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Cutout</p>
               {active?.stage === "done" ? (
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-xl p-3">
+                <div className="space-y-2.5">
+                  <div className="flex items-center gap-2.5 bg-emerald-50 border border-emerald-200 rounded-xl p-3">
                     <div className="w-7 h-7 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0">
                       <Check size={13} className="text-white" />
                     </div>
                     <div>
                       <div className="text-xs font-black text-gray-900">Background removed</div>
-                      <div className="text-[10px] text-gray-500">AI processed · Transparent PNG</div>
+                      <div className="text-[10px] text-gray-400">Transparent PNG ready</div>
                     </div>
                   </div>
-                  {!brushActive && (
-                    <button onClick={() => setBrushActive(true)}
-                      className="w-full flex items-center justify-center gap-2 border border-violet-300 text-violet-700 hover:bg-violet-50 py-2.5 rounded-xl text-sm font-bold transition">
-                      <Paintbrush size={14} /> Refine with Brush
-                    </button>
-                  )}
-                  <button onClick={() => { if (active) processItem({ ...active, bgColor: active.bgColor }); }}
+                  <button onClick={() => setBrushActive(true)}
+                    className="w-full flex items-center justify-center gap-2 border border-violet-200 text-violet-700 hover:bg-violet-50 py-2.5 rounded-xl text-sm font-bold transition">
+                    <Paintbrush size={13} /> Refine with Brush
+                  </button>
+                  <button onClick={() => active && processItem({ ...active })}
                     className="w-full flex items-center justify-center gap-2 border border-gray-200 text-gray-600 hover:bg-gray-50 py-2.5 rounded-xl text-sm font-bold transition">
-                    <RotateCcw size={14} /> Re-process
+                    <RotateCcw size={13} /> Re-process
                   </button>
                 </div>
               ) : active?.stage === "processing" ? (
-                <div className="text-center py-6">
-                  <Loader2 size={28} className="animate-spin text-violet-600 mx-auto mb-2" />
-                  <div className="text-sm font-bold text-gray-700">Processing…</div>
-                  <div className="mt-3 bg-gray-100 rounded-full h-2 overflow-hidden">
-                    <div className="h-full rounded-full transition-all" style={{ width: `${active.progress}%`, background: "linear-gradient(90deg,#7c3aed,#3b82f6)" }} />
+                <div className="text-center py-8">
+                  <Loader2 size={28} className="animate-spin text-violet-600 mx-auto mb-3" />
+                  <div className="text-sm font-bold text-gray-700 mb-3">Processing…</div>
+                  <div className="bg-gray-100 rounded-full h-2 overflow-hidden">
+                    <div className="h-full rounded-full transition-all duration-300" style={{ width: `${active.progress}%`, background: "linear-gradient(90deg,#7c3aed,#3b82f6)" }} />
                   </div>
-                  <div className="text-xs text-gray-400 mt-1">{active.progress}%</div>
+                  <div className="text-xs text-gray-400 mt-1.5">{active.progress}%</div>
                 </div>
               ) : active?.stage === "error" ? (
-                <div className="text-center py-4">
+                <div className="text-center py-6">
                   <AlertCircle size={28} className="text-red-400 mx-auto mb-2" />
-                  <p className="text-red-500 text-sm font-bold mb-3">{active.error}</p>
-                  <button onClick={() => active && processItem(active)} className="border border-gray-200 text-gray-700 px-4 py-2 rounded-xl text-sm font-bold hover:bg-gray-50 transition">
-                    Retry
-                  </button>
+                  <p className="text-sm text-red-500 font-bold mb-3">{active.error}</p>
+                  <button onClick={() => active && processItem(active)} className="border border-gray-200 text-gray-700 px-4 py-2 rounded-xl text-sm font-bold hover:bg-gray-50 transition">Retry</button>
                 </div>
               ) : (
-                <div className="text-center py-6 text-gray-400 text-sm">Select an image below to process</div>
+                <div className="text-center py-8 text-gray-400 text-xs">Select an image below</div>
               )}
             </div>
           )}
 
           {tab === "background" && (
-            <div className="p-5">
-              <h3 className="text-sm font-black text-gray-900 mb-4">Background</h3>
+            <div className="p-4">
+              <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Background</p>
               {active?.stage === "done" ? (
                 <div className="space-y-4">
                   <div>
-                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Color</p>
+                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-2">Solid Color</p>
                     <div className="grid grid-cols-4 gap-2">
                       {BG_COLORS.map(({ label, value }) => (
                         <button key={label} title={label}
                           onClick={() => active && applyBackground(active.id, value)}
-                          className={`aspect-square rounded-xl border-2 transition hover:scale-110 ${
-                            active.bgColor === value ? "border-violet-500 scale-110" : "border-gray-200"
-                          }`}
-                          style={{
-                            background: value ?? "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8'%3E%3Crect width='4' height='4' fill='%23ccc'/%3E%3Crect x='4' y='4' width='4' height='4' fill='%23ccc'/%3E%3Crect x='4' width='4' height='4' fill='%23fff'/%3E%3Crect y='4' width='4' height='4' fill='%23fff'/%3E%3C/svg%3E\")",
-                          }} />
+                          className={`w-full aspect-square rounded-xl border-2 transition-all hover:scale-105 ${active.bgColor === value ? "border-violet-500 ring-2 ring-violet-200" : "border-gray-200 hover:border-gray-400"}`}
+                          style={{ background: value ?? "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8'%3E%3Crect width='4' height='4' fill='%23d1d5db'/%3E%3Crect x='4' y='4' width='4' height='4' fill='%23d1d5db'/%3E%3Crect x='4' y='0' width='4' height='4' fill='%23fff'/%3E%3Crect x='0' y='4' width='4' height='4' fill='%23fff'/%3E%3C/svg%3E\")" }}
+                        />
                       ))}
                     </div>
                   </div>
                   <div>
-                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Custom Color</p>
+                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-2">Custom Color</p>
                     <div className="flex items-center gap-2">
                       <input type="color" defaultValue="#ffffff"
                         onChange={e => active && applyBackground(active.id, e.target.value)}
-                        className="w-10 h-10 rounded-lg border border-gray-200 cursor-pointer p-0.5" />
+                        className="w-10 h-10 rounded-xl border border-gray-200 cursor-pointer p-1" />
                       <span className="text-xs text-gray-500">Pick any color</span>
                     </div>
                   </div>
-                  <div>
-                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Image Background</p>
-                    <button className="w-full border border-dashed border-gray-300 rounded-xl py-4 text-xs text-gray-400 font-bold hover:border-violet-300 hover:text-violet-500 transition flex items-center justify-center gap-2">
-                      <Lock size={12} /> Upload Image — Pro
+                  <div className="pt-1">
+                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-2">Image / Gradient</p>
+                    <button className="w-full border-2 border-dashed border-gray-200 rounded-xl py-3.5 text-xs text-gray-400 font-bold hover:border-violet-300 hover:text-violet-500 transition flex items-center justify-center gap-2">
+                      <Lock size={11} /> Upload Background — Pro
                     </button>
                   </div>
                 </div>
               ) : (
-                <div className="text-center py-6 text-gray-400 text-sm">Process an image first</div>
+                <div className="text-center py-8 text-gray-400 text-xs">Process an image first</div>
               )}
             </div>
           )}
 
           {tab === "effects" && (
-            <div className="p-5">
-              <h3 className="text-sm font-black text-gray-900 mb-4">Effects</h3>
+            <div className="p-4">
+              <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Effects</p>
               {active?.stage === "done" ? (
                 <div className="space-y-5">
                   {[
-                    { label: "Brightness", key: "brightness" as const, min: 50, max: 200, default: 100 },
-                    { label: "Contrast",   key: "contrast"   as const, min: 50, max: 200, default: 100 },
+                    { label: "Brightness", key: "brightness" as const, min: 50, max: 200 },
+                    { label: "Contrast",   key: "contrast"   as const, min: 50, max: 200 },
                   ].map(({ label, key, min, max }) => (
                     <div key={key}>
-                      <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center justify-between mb-1.5">
                         <span className="text-xs font-bold text-gray-700">{label}</span>
-                        <span className="text-xs text-gray-400 font-mono">{active[key]}%</span>
+                        <span className="text-xs text-gray-400 tabular-nums">{active[key]}%</span>
                       </div>
                       <input type="range" min={min} max={max} value={active[key]}
-                        onChange={e => updateItem(active.id, { [key]: parseInt(e.target.value) } as any)}
-                        className="w-full accent-violet-600 cursor-pointer" />
+                        onChange={e => updateItem(active.id, { [key]: parseInt(e.target.value) } as Partial<ImageItem>)}
+                        className="w-full cursor-pointer accent-violet-600 h-1.5" />
                     </div>
                   ))}
-                  <div>
-                    <p className="text-xs font-bold text-gray-700 mb-2">Shadow</p>
-                    <button className="w-full border border-dashed border-gray-300 rounded-xl py-3 text-xs text-gray-400 font-bold hover:border-violet-300 transition flex items-center justify-center gap-2">
-                      <Lock size={12} /> Add Shadow — Pro
-                    </button>
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-gray-700 mb-2">Blur Background</p>
-                    <button className="w-full border border-dashed border-gray-300 rounded-xl py-3 text-xs text-gray-400 font-bold hover:border-violet-300 transition flex items-center justify-center gap-2">
-                      <Lock size={12} /> Blur Effect — Pro
-                    </button>
+                  <div className="space-y-2 pt-1">
+                    {["Add Shadow", "Blur Background", "Vintage Filter"].map(f => (
+                      <button key={f} className="w-full border-2 border-dashed border-gray-200 rounded-xl py-2.5 text-xs text-gray-400 font-bold hover:border-violet-300 hover:text-violet-500 transition flex items-center justify-center gap-2">
+                        <Lock size={11} /> {f} — Pro
+                      </button>
+                    ))}
                   </div>
                 </div>
               ) : (
-                <div className="text-center py-6 text-gray-400 text-sm">Process an image first</div>
+                <div className="text-center py-8 text-gray-400 text-xs">Process an image first</div>
               )}
             </div>
           )}
 
           {tab === "adjust" && (
-            <div className="p-5">
-              <h3 className="text-sm font-black text-gray-900 mb-4">Adjust</h3>
+            <div className="p-4">
+              <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Adjust</p>
               {active?.stage === "done" ? (
                 <div className="space-y-4">
                   <div>
-                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Flip</p>
+                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-2">Flip</p>
                     <div className="grid grid-cols-2 gap-2">
                       <button onClick={() => active && applyFlip(active.id, "h")}
-                        className={`flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold border transition ${
-                          active.flipH ? "border-violet-500 bg-violet-50 text-violet-700" : "border-gray-200 text-gray-600 hover:bg-gray-50"
-                        }`}>
-                        <FlipHorizontal size={15} /> Horizontal
+                        className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold border-2 transition ${active.flipH ? "border-violet-500 bg-violet-50 text-violet-700" : "border-gray-200 text-gray-600 hover:border-gray-300"}`}>
+                        <FlipHorizontal size={13} /> Horizontal
                       </button>
                       <button onClick={() => active && applyFlip(active.id, "v")}
-                        className={`flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold border transition ${
-                          active.flipV ? "border-violet-500 bg-violet-50 text-violet-700" : "border-gray-200 text-gray-600 hover:bg-gray-50"
-                        }`}>
-                        <FlipVertical size={15} /> Vertical
+                        className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold border-2 transition ${active.flipV ? "border-violet-500 bg-violet-50 text-violet-700" : "border-gray-200 text-gray-600 hover:border-gray-300"}`}>
+                        <FlipVertical size={13} /> Vertical
                       </button>
                     </div>
                   </div>
-                  <div>
-                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Rotate</p>
-                    <button className="w-full border border-dashed border-gray-300 rounded-xl py-3 text-xs text-gray-400 font-bold hover:border-violet-300 transition flex items-center justify-center gap-2">
-                      <Lock size={12} /> Rotate — Pro
-                    </button>
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Crop</p>
-                    <button className="w-full border border-dashed border-gray-300 rounded-xl py-3 text-xs text-gray-400 font-bold hover:border-violet-300 transition flex items-center justify-center gap-2">
-                      <Lock size={12} /> Crop — Pro
-                    </button>
+                  <div className="space-y-2">
+                    {["Rotate 90°", "Crop & Resize", "Perspective"].map(f => (
+                      <button key={f} className="w-full border-2 border-dashed border-gray-200 rounded-xl py-2.5 text-xs text-gray-400 font-bold hover:border-violet-300 hover:text-violet-500 transition flex items-center justify-center gap-2">
+                        <Lock size={11} /> {f} — Pro
+                      </button>
+                    ))}
                   </div>
                 </div>
               ) : (
-                <div className="text-center py-6 text-gray-400 text-sm">Process an image first</div>
+                <div className="text-center py-8 text-gray-400 text-xs">Process an image first</div>
               )}
             </div>
           )}
 
           {tab === "design" && (
-            <div className="p-5">
-              <h3 className="text-sm font-black text-gray-900 mb-4">Design</h3>
-              <div className="space-y-3">
-                {["Add Text", "Add Logo / Watermark", "Custom Templates", "Social Presets"].map(f => (
-                  <button key={f} className="w-full border border-dashed border-gray-300 rounded-xl py-3 text-xs text-gray-400 font-bold hover:border-violet-300 transition flex items-center justify-center gap-2">
-                    <Lock size={12} /> {f} — Pro
+            <div className="p-4">
+              <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Design</p>
+              <div className="space-y-2 mb-4">
+                {["Add Text Overlay", "Add Logo / Watermark", "Social Media Presets", "Custom Templates"].map(f => (
+                  <button key={f} className="w-full border-2 border-dashed border-gray-200 rounded-xl py-2.5 text-xs text-gray-400 font-bold hover:border-violet-300 hover:text-violet-500 transition flex items-center justify-center gap-2">
+                    <Lock size={11} /> {f} — Pro
                   </button>
                 ))}
-                <Link href="/pricing"
-                  className="w-full btn-primary text-white text-sm font-black py-3 rounded-xl flex items-center justify-center gap-2 mt-2">
-                  <Zap size={14} fill="currentColor" /> Unlock Pro Features
-                </Link>
               </div>
+              <Link href="/pricing" className="w-full btn-primary text-white text-sm font-black py-3 rounded-xl flex items-center justify-center gap-2">
+                <Zap size={14} fill="currentColor" /> Unlock Pro
+              </Link>
             </div>
           )}
         </div>
 
-        {/* Main canvas */}
-        <div className="flex-1 flex items-center justify-center p-6 relative overflow-hidden">
+        {/* Canvas area */}
+        <div className="flex-1 flex flex-col items-center justify-center relative p-6 overflow-hidden">
 
           {/* Canva toast */}
           {canvaToast && (
-            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 bg-gray-900 text-white text-sm font-bold px-5 py-3 rounded-2xl shadow-xl flex items-center gap-2 animate-bounce">
-              <Check size={15} className="text-green-400" />
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 bg-gray-900 text-white text-sm font-bold px-5 py-3 rounded-2xl shadow-xl flex items-center gap-2">
+              <Check size={14} className="text-green-400" />
               Image saved! Drag it onto Canva to edit
+              <X size={13} className="text-gray-400 cursor-pointer ml-1" onClick={() => setCanvaToast(false)} />
             </div>
           )}
 
           {active ? (
-            <div className="relative max-w-full max-h-full">
-              {brushActive && active.resultBlob && (
-                <div className="absolute inset-0 z-10">
-                  <BrushEditor
-                    resultBlob={active.resultBlob}
-                    originalSrc={active.originalUrl}
-                    onDone={(edited) => {
-                      const url = URL.createObjectURL(edited);
-                      const prev = { url: active.resultUrl!, blob: active.resultBlob! };
-                      updateItem(active.id, {
-                        resultBlob: edited, resultUrl: url,
-                        undoStack: [...active.undoStack, prev].slice(-10),
-                        redoStack: [],
-                      });
-                      setBrushActive(false);
-                    }}
-                    onCancel={() => setBrushActive(false)}
-                  />
-                </div>
-              )}
-
-              {active.stage === "done" && active.resultUrl ? (
-                <div className="relative group">
-                  {/* Image */}
-                  <div className={`rounded-2xl overflow-hidden ${active.bgColor ? "" : "checker"}`}
-                    style={{ maxWidth: "min(700px, calc(100vw - 400px))", maxHeight: "calc(100dvh - 220px)" }}>
+            <>
+              {brushActive && active.resultBlob ? (
+                <BrushEditor
+                  resultBlob={active.resultBlob}
+                  originalSrc={active.originalUrl}
+                  onDone={(edited) => {
+                    const url = URL.createObjectURL(edited);
+                    const prev = { url: active.resultUrl!, blob: active.resultBlob! };
+                    updateItem(active.id, { resultBlob: edited, resultUrl: url, undoStack: [...active.undoStack, prev].slice(-10), redoStack: [] });
+                    setBrushActive(false);
+                  }}
+                  onCancel={() => setBrushActive(false)}
+                />
+              ) : active.stage === "done" && active.resultUrl ? (
+                <div className="relative group max-w-full max-h-full">
+                  <div
+                    className={`rounded-2xl overflow-hidden ${active.bgColor ? "" : "checker"}`}
+                    style={{
+                      maxWidth: "min(720px, calc(100vw - 290px))",
+                      maxHeight: "calc(100vh - 160px)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}>
                     <img
                       src={active.resultUrl}
                       alt="Result"
                       style={{
                         display: "block",
                         maxWidth: "100%",
-                        maxHeight: "calc(100dvh - 220px)",
+                        maxHeight: "calc(100vh - 160px)",
                         width: "auto",
                         height: "auto",
-                        objectFit: "contain",
                         filter: `brightness(${active.brightness}%) contrast(${active.contrast}%)`,
                       }}
                     />
                   </div>
 
-                  {/* Edit in Canva overlay */}
-                  <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                  {/* Edit in Canva */}
+                  <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-all duration-200">
                     <button onClick={editInCanva}
-                      className="flex items-center gap-2 bg-white/95 backdrop-blur-sm border border-gray-200 shadow-lg px-3 py-2 rounded-xl text-sm font-bold text-gray-800 hover:bg-white transition">
-                      <div className="w-5 h-5 rounded flex items-center justify-center" style={{ background: "#7C3AED" }}>
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                      className="flex items-center gap-2 bg-white/95 border border-gray-200 shadow-lg px-3 py-2 rounded-xl text-sm font-bold text-gray-800 hover:bg-white transition-all hover:shadow-xl">
+                      <div className="w-5 h-5 rounded flex items-center justify-center flex-shrink-0" style={{ background: "#7C3AED" }}>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none">
                           <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
                         </svg>
                       </div>
                       Edit in Canva
-                      <ExternalLink size={11} className="text-gray-400" />
+                      <ExternalLink size={10} className="text-gray-400" />
                     </button>
                   </div>
                 </div>
               ) : active.stage === "processing" ? (
                 <div className="text-center">
-                  <div className="w-24 h-24 rounded-3xl flex items-center justify-center mx-auto mb-5 bg-white border border-gray-200 shadow">
-                    <Loader2 size={36} className="animate-spin text-violet-600" />
+                  <div className="w-20 h-20 rounded-3xl bg-white border border-gray-200 shadow flex items-center justify-center mx-auto mb-4">
+                    <Loader2 size={32} className="animate-spin text-violet-600" />
                   </div>
-                  <p className="text-gray-700 font-black text-lg mb-2">Removing background…</p>
-                  <div className="w-64 bg-gray-200 rounded-full h-2.5 mx-auto overflow-hidden">
-                    <div className="h-full rounded-full transition-all duration-300"
-                      style={{ width: `${active.progress}%`, background: "linear-gradient(90deg,#7c3aed,#3b82f6)" }} />
+                  <p className="text-gray-800 font-black text-lg mb-3">Removing background…</p>
+                  <div className="w-64 bg-gray-200 rounded-full h-2 mx-auto overflow-hidden">
+                    <div className="h-full rounded-full transition-all duration-300" style={{ width: `${active.progress}%`, background: "linear-gradient(90deg,#7c3aed,#3b82f6)" }} />
                   </div>
-                  <p className="text-gray-400 text-sm mt-1">{active.progress}%</p>
+                  <p className="text-gray-400 text-sm mt-1.5">{active.progress}%</p>
                 </div>
               ) : active.stage === "error" ? (
                 <div className="text-center">
-                  <AlertCircle size={48} className="text-red-400 mx-auto mb-3" />
-                  <p className="text-red-500 font-semibold">{active.error}</p>
-                  <button onClick={() => processItem(active)} className="mt-4 border border-gray-200 px-5 py-2 rounded-xl font-bold text-gray-700 hover:bg-gray-50 transition">
-                    Retry
-                  </button>
+                  <AlertCircle size={44} className="text-red-400 mx-auto mb-3" />
+                  <p className="text-red-500 font-semibold mb-4">{active.error}</p>
+                  <button onClick={() => processItem(active)} className="border border-gray-200 px-6 py-2.5 rounded-xl font-bold text-gray-700 hover:bg-gray-50 transition">Retry</button>
                 </div>
               ) : (
                 <div className="text-center text-gray-400">
-                  <Loader2 size={32} className="animate-spin mx-auto mb-2" />
-                  <p className="text-sm">Queued…</p>
+                  <Loader2 size={28} className="animate-spin mx-auto mb-2" />
+                  <p className="text-sm">Queued for processing…</p>
                 </div>
               )}
-            </div>
+            </>
           ) : (
             <div className="text-center text-gray-400">
-              <ImageIcon size={48} className="mx-auto mb-3 opacity-30" />
-              <p className="text-sm">Select an image from the strip below</p>
+              <ImageIcon size={44} className="mx-auto mb-3 opacity-30" />
+              <p className="text-sm">Select an image below</p>
             </div>
           )}
         </div>
       </div>
 
-      {/* Bottom image strip */}
-      <div {...getRootProps()} className="flex-shrink-0 bg-white border-t border-gray-200 px-4 py-2">
-        <input {...getInputProps()} />
-        <div className="flex items-center gap-2 overflow-x-auto pb-1">
+      {/* ── BOTTOM IMAGE STRIP ─────────────────────────── */}
+      <div className="flex-shrink-0 bg-white border-t border-gray-200">
+        <div {...getRootProps()} className="px-4 py-2.5 flex items-center gap-2 overflow-x-auto">
+          <input {...getInputProps()} />
           {images.map(item => (
             <div key={item.id}
               onClick={() => setActiveId(item.id)}
-              className={`relative flex-shrink-0 w-16 h-16 rounded-xl overflow-hidden cursor-pointer transition-all border-2 ${
-                activeId === item.id ? "border-violet-500 scale-105 shadow-md" : "border-transparent hover:border-gray-300"
+              className={`relative flex-shrink-0 w-[52px] h-[52px] rounded-xl overflow-hidden cursor-pointer transition-all border-2 ${
+                activeId === item.id ? "border-violet-500 shadow-md" : "border-gray-200 hover:border-violet-300"
               }`}>
               {item.stage === "done" && item.resultUrl ? (
                 <div className="w-full h-full checker">
@@ -723,28 +702,26 @@ export default function ToolPage() {
                 </div>
               ) : item.stage === "processing" ? (
                 <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                  <Loader2 size={18} className="animate-spin text-violet-500" />
+                  <Loader2 size={16} className="animate-spin text-violet-500" />
                 </div>
               ) : item.stage === "error" ? (
                 <div className="w-full h-full bg-red-50 flex items-center justify-center">
-                  <AlertCircle size={18} className="text-red-400" />
+                  <AlertCircle size={16} className="text-red-400" />
                 </div>
               ) : (
                 <img src={item.originalUrl} alt="" className="w-full h-full object-cover" />
               )}
-              {/* Remove button */}
               <button
                 onClick={e => { e.stopPropagation(); removeImage(item.id); }}
-                className="absolute -top-1 -right-1 w-4 h-4 bg-gray-800 rounded-full flex items-center justify-center opacity-0 hover:opacity-100 group-hover:opacity-100 transition">
-                <X size={8} className="text-white" />
+                className="absolute -top-1 -right-1 w-4 h-4 bg-gray-800 rounded-full flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                <X size={7} className="text-white" />
               </button>
             </div>
           ))}
 
-          {/* Add more button */}
           <button onClick={openPicker}
-            className="flex-shrink-0 w-16 h-16 rounded-xl border-2 border-dashed border-gray-300 hover:border-violet-400 hover:bg-violet-50 flex items-center justify-center transition-all group">
-            <Plus size={22} className="text-gray-400 group-hover:text-violet-600 transition-colors" />
+            className="flex-shrink-0 w-[52px] h-[52px] rounded-xl border-2 border-dashed border-gray-300 hover:border-violet-400 hover:bg-violet-50/50 flex items-center justify-center transition-all group">
+            <Plus size={20} className="text-gray-400 group-hover:text-violet-600 transition-colors" />
           </button>
         </div>
       </div>
