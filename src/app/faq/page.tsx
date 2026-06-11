@@ -16,14 +16,14 @@ const FAQS = [
 
 export default function FAQPage() {
   return (
-    <div className="min-h-screen bg-[#0a0a14] text-white py-20 px-4">
+    <div className="min-h-screen bg-gray-50 py-20 px-4">
       <div className="max-w-3xl mx-auto">
 
         <div className="text-center mb-14">
-          <div className="inline-flex items-center gap-2 glass px-3 py-1.5 rounded-full text-xs font-bold text-violet-400 mb-5 border border-violet-500/20">
+          <div className="inline-flex items-center gap-2 bg-violet-50 border border-violet-200 px-3 py-1.5 rounded-full text-xs font-bold text-violet-600 mb-5">
             <MessageCircle size={12} /> Help center
           </div>
-          <h1 className="text-4xl md:text-5xl font-black mb-4">
+          <h1 className="text-4xl md:text-5xl font-black text-gray-900 mb-4">
             Frequently Asked<br /><span className="gradient-text">Questions</span>
           </h1>
           <p className="text-gray-500">Everything you need to know about BG Remover.</p>
@@ -31,13 +31,12 @@ export default function FAQPage() {
 
         <div className="space-y-3">
           {FAQS.map(({ q, a }) => (
-            <details key={q} className="group rounded-2xl transition-colors"
-              style={{ background: "linear-gradient(135deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))", border: "1px solid rgba(255,255,255,0.14)" }}>
-              <summary className="flex items-center justify-between px-6 py-5 cursor-pointer list-none font-bold text-white hover:text-violet-300 transition-colors gap-3">
+            <details key={q} className="group bg-white rounded-2xl border border-gray-200 card-shadow transition-colors">
+              <summary className="flex items-center justify-between px-6 py-5 cursor-pointer list-none font-bold text-gray-900 hover:text-violet-600 transition-colors gap-3">
                 <span>{q}</span>
-                <ChevronDown size={16} className="text-gray-500 group-open:rotate-180 transition-transform flex-shrink-0" />
+                <ChevronDown size={16} className="text-gray-400 group-open:rotate-180 transition-transform flex-shrink-0" />
               </summary>
-              <div className="px-6 pb-5 text-gray-400 text-sm leading-relaxed border-t border-white/5 pt-4">{a}</div>
+              <div className="px-6 pb-5 text-gray-600 text-sm leading-relaxed border-t border-gray-100 pt-4">{a}</div>
             </details>
           ))}
         </div>
@@ -54,7 +53,7 @@ export default function FAQPage() {
 
         <div className="mt-8 text-center">
           <Link href="/tool"
-            className="inline-flex items-center gap-2 bg-violet-600 hover:bg-violet-500 text-white px-8 py-3.5 rounded-xl font-black transition shadow-lg shadow-violet-500/20">
+            className="inline-flex items-center gap-2 btn-primary text-white px-8 py-3.5 rounded-xl font-black transition">
             <Upload size={16} /> Try it Free Now
           </Link>
         </div>
