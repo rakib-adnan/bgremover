@@ -33,13 +33,14 @@ details summary::-webkit-details-marker { display: none; }
 }
 
 .card-hover {
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: transform 0.25s cubic-bezier(0.16,1,0.3,1), box-shadow 0.25s;
 }
 .card-hover:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 20px 60px rgba(124,58,237,0.15);
+  transform: translateY(-4px);
+  box-shadow: 0 24px 60px rgba(124,58,237,0.18);
 }
 
+/* ── Animations ── */
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
   50% { transform: translateY(-8px); }
@@ -49,4 +50,111 @@ details summary::-webkit-details-marker { display: none; }
 @keyframes pulse-ring {
   0% { transform: scale(0.95); opacity: 1; }
   100% { transform: scale(1.3); opacity: 0; }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(28px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.93); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes slideRight {
+  from { opacity: 0; transform: translateX(-24px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes shimmer {
+  to { background-position: 200% center; }
+}
+@keyframes gradientFlow {
+  0%, 100% { background-position: 0% 50%; }
+  50%       { background-position: 100% 50%; }
+}
+@keyframes borderGlow {
+  0%, 100% { box-shadow: 0 0 16px rgba(124,58,237,0.2); }
+  50%       { box-shadow: 0 0 40px rgba(124,58,237,0.5), 0 0 80px rgba(96,165,250,0.15); }
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Entrance animation utilities */
+.anim-fade-up   { animation: fadeInUp  0.7s cubic-bezier(0.16,1,0.3,1) both; }
+.anim-fade-in   { animation: fadeIn    0.6s ease both; }
+.anim-scale-in  { animation: scaleIn   0.6s cubic-bezier(0.16,1,0.3,1) both; }
+.anim-slide-r   { animation: slideRight 0.7s cubic-bezier(0.16,1,0.3,1) both; }
+.anim-slide-up  { animation: slideUp   0.5s cubic-bezier(0.16,1,0.3,1) both; }
+
+/* Delay helpers */
+.d1 { animation-delay: 0.1s; }
+.d2 { animation-delay: 0.2s; }
+.d3 { animation-delay: 0.3s; }
+.d4 { animation-delay: 0.4s; }
+.d5 { animation-delay: 0.5s; }
+.d6 { animation-delay: 0.6s; }
+.d7 { animation-delay: 0.7s; }
+.d8 { animation-delay: 0.8s; }
+
+/* Shimmer headline */
+.shimmer-text {
+  background: linear-gradient(90deg, #a78bfa, #60a5fa, #34d399, #a78bfa);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 3s linear infinite;
+}
+
+/* Animated gradient border */
+.grad-border {
+  position: relative;
+  isolation: isolate;
+}
+.grad-border::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(124,58,237,0.6), rgba(59,130,246,0.4), rgba(52,211,153,0.3));
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.grad-border:hover::before { opacity: 1; }
+
+/* Checkerboard for transparent bg simulation */
+.checker-dark {
+  background-color: #0e0e1e;
+  background-image:
+    linear-gradient(45deg, #181830 25%, transparent 25%),
+    linear-gradient(-45deg, #181830 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #181830 75%),
+    linear-gradient(-45deg, transparent 75%, #181830 75%);
+  background-size: 14px 14px;
+  background-position: 0 0, 0 7px, 7px -7px, -7px 0;
+}
+
+/* Gradient background animate */
+.bg-animate {
+  background-size: 200% 200%;
+  animation: gradientFlow 5s ease infinite;
+}
+
+/* Glow border animation */
+.border-glow { animation: borderGlow 3s ease-in-out infinite; }
+
+/* Noise texture overlay */
+.noise::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  border-radius: inherit;
 }
