@@ -362,7 +362,7 @@ export default function ToolPage() {
 
   // ── UPLOAD STATE ───────────────────────────────────────────────────────────
   if (!imgs.length) return (
-    <div {...getRootProps()} style={{ height: "calc(100vh - 64px)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "#fff", cursor: "default", position: "relative" }}>
+    <div {...getRootProps()} style={{ height: "calc(100vh - 64px)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "#e8e8e8", cursor: "default", position: "relative" }}>
       <input {...getInputProps()} />
       {errMsg && (
         <div style={{ position: "absolute", top: 16, left: "50%", transform: "translateX(-50%)", zIndex: 50, display: "flex", alignItems: "center", gap: 10, background: "#ef4444", color: "#fff", fontSize: 13, fontWeight: 600, padding: "10px 18px", borderRadius: 16, boxShadow: "0 8px 32px rgba(0,0,0,.3)", whiteSpace: "nowrap" }}>
@@ -414,7 +414,7 @@ export default function ToolPage() {
 
   // ── EDITOR ─────────────────────────────────────────────────────────────────
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 64px)", overflow: "hidden", background: "#f3f4f6" }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 64px)", overflow: "hidden", background: "#e8e8e8" }}>
 
       {/* ── FLOATING PILL TOOLBAR (centered, remove.bg style) ───────────── */}
       <div style={{ flexShrink: 0, display: "flex", justifyContent: "center", padding: "10px 16px 8px" }}>
@@ -529,7 +529,7 @@ export default function ToolPage() {
       <div style={{ flex: 1, display: "flex", overflow: "hidden", position: "relative" }}>
 
         {/* Canvas (dropzone) */}
-        <div {...getRootProps()} style={{ flex: 1, position: "relative", overflow: "hidden", background: "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div {...getRootProps()} style={{ flex: 1, position: "relative", overflow: "hidden", background: "#e8e8e8", display: "flex", alignItems: "center", justifyContent: "center" }}>
           <input {...getInputProps()} />
 
           {isDragActive && (
@@ -564,7 +564,7 @@ export default function ToolPage() {
                 onCancel={() => setBrush(false)} />
             ) : active.stage === "done" && active.resultUrl ? (
               <div style={{ padding: 32, display: "flex", alignItems: "center", justifyContent: "center", width: "100%", height: "100%", boxSizing: "border-box" }}>
-                <div style={{ position: "relative", borderRadius: 16, overflow: "hidden", boxShadow: active.shadow ? "0 20px 60px rgba(0,0,0,.4), 0 8px 40px rgba(0,0,0,.15)" : "0 4px 24px rgba(0,0,0,.1)", border: "1px solid rgba(0,0,0,.06)" }}>
+                <div style={{ position: "relative", borderRadius: 24, overflow: "hidden", boxShadow: active.shadow ? "0 20px 60px rgba(0,0,0,.4), 0 8px 40px rgba(0,0,0,.15)" : "0 2px 16px rgba(0,0,0,.08)", border: "1px solid rgba(0,0,0,.08)" }}>
                   {active.bgPhotoUrl ? (
                     <div style={{ position: "absolute", inset: 0, backgroundImage: `url(${active.bgPhotoUrl})`, backgroundSize: "cover", backgroundPosition: "center", filter: active.blurBg > 0 ? `blur(${active.blurBg * 2}px)` : undefined, transform: active.blurBg > 0 ? "scale(1.08)" : undefined }} />
                   ) : active.bgColor ? (
@@ -583,7 +583,7 @@ export default function ToolPage() {
               </div>
             ) : active.stage === "processing" ? (
               <div style={{ padding: 32, display: "flex", alignItems: "center", justifyContent: "center", width: "100%", height: "100%", boxSizing: "border-box" }}>
-                <div style={{ position: "relative", borderRadius: 16, overflow: "hidden", boxShadow: "0 4px 24px rgba(0,0,0,.1)", border: "1px solid rgba(0,0,0,.06)" }}>
+                <div style={{ position: "relative", borderRadius: 24, overflow: "hidden", boxShadow: "0 2px 16px rgba(0,0,0,.08)", border: "1px solid rgba(0,0,0,.08)" }}>
                   <img src={active.origUrl} alt="Processing" style={{ display: "block", maxWidth: "min(520px, calc(100vw - 64px))", maxHeight: "calc(100vh - 260px)", width: "auto", height: "auto" }} />
                   <div style={{ position: "absolute", inset: 0, background: "rgba(255,255,255,0.85)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12 }}>
                     <Loader2 size={32} color="#111827" className="animate-spin" />
