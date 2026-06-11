@@ -82,3 +82,19 @@ details summary::-webkit-details-marker { display: none; }
   height: 1px;
   background: linear-gradient(90deg, transparent, #e2e8f0, transparent);
 }
+
+/* Blog post content styles */
+.prose-content h1, .prose-content h2, .prose-content h3, .prose-content h4 {
+  font-weight: 900; color: #111827; margin: 1.5em 0 0.5em;
+}
+.prose-content h2 { font-size: 1.5rem; }
+.prose-content h3 { font-size: 1.25rem; }
+.prose-content p { margin: 1em 0; }
+.prose-content a { color: #7c3aed; text-decoration: underline; }
+.prose-content ul, .prose-content ol { margin: 1em 0; padding-left: 1.5em; }
+.prose-content li { margin: 0.4em 0; }
+.prose-content img { border-radius: 12px; max-width: 100%; margin: 1.5em 0; }
+.prose-content blockquote { border-left: 3px solid #7c3aed; padding-left: 1em; color: #6b7280; margin: 1.5em 0; }
+.prose-content pre { background: #1f2937; color: #e5e7eb; padding: 1em; border-radius: 10px; overflow-x: auto; margin: 1.5em 0; font-size: 0.875rem; }
+.prose-content code { background: #f3f4f6; color: #7c3aed; padding: 0.2em 0.4em; border-radius: 4px; font-size: 0.875em; }
+.prose-content pre code { background: none; color: inherit; padding: 0; }

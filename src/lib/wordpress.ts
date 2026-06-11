@@ -1,4 +1,56 @@
-const WP_API = process.env.WORDPRESS_API_URL!;
+const WP_API = process.env.WORDPRESS_API_URL ?? "https://darkscreen.online/wp-json";
+
+export interface WPPost {
+  id: number;
+  slug: string;
+  date: string;
+  title: { rendered: string };
+  excerpt: { rendered: string };
+  content: { rendered: string };
+  featured_media: number;
+  _embedded?: {
+    "wp:featuredmedia"?: Array<{ source_url: string; alt_text: string }>;
+    "wp:term"?: Array<Array<{ id: number; name: string; slug: string }>>;
+    author?: Array<{ name: string }>;
+  };
+}
+
+export async function getPosts(page = 1, perPage = 9): Promise<{ posts: WPPost[]; total: number; totalPages: number }> {
+  try {
+    const res = await fetch(
+      `${WP_API}/wp/v2/posts?per_page=${perPage}&page=${page}&_embed=1&status=publish`,
+      { next: { revalidate: 60 } }
+    );
+    if (!res.ok) return { posts: [], total: 0, totalPages: 0 };
+    const posts: WPPost[] = await res.json();
+    return {
+      posts,
+      total: parseInt(res.headers.get("X-WP-Total") ?? "0"),
+      totalPages: parseInt(res.headers.get("X-WP-TotalPages") ?? "0"),
+    };
+  } catch { return { posts: [], total: 0, totalPages: 0 }; }
+}
+
+export async function getPostBySlug(slug: string): Promise<WPPost | null> {
+  try {
+    const res = await fetch(`${WP_API}/wp/v2/posts?slug=${slug}&_embed=1`, { next: { revalidate: 60 } });
+    if (!res.ok) return null;
+    const posts: WPPost[] = await res.json();
+    return posts[0] ?? null;
+  } catch { return null; }
+}
+
+export function getFeaturedImage(post: WPPost): string | null {
+  return post._embedded?.["wp:featuredmedia"]?.[0]?.source_url ?? null;
+}
+
+export function formatDate(date: string): string {
+  return new Date(date).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+}
+
+export function stripHtml(html: string): string {
+  return html.replace(/<[^>]*>/g, "").replace(/&[^;]+;/g, " ").trim().slice(0, 160);
+}
 
 export async function registerUser(name: string, email: string, password: string) {
   const res = await fetch(`${WP_API}/wp/v2/users`, {

@@ -22,6 +22,7 @@ export default function Footer() {
             <ul className="space-y-3 text-sm">
               <li><Link href="/tool" className="hover:text-white transition">Remove Background</Link></li>
               <li><Link href="/pricing" className="hover:text-white transition">Pricing</Link></li>
+              <li><Link href="/blog" className="hover:text-white transition">Blog</Link></li>
             </ul>
           </div>
           <div>

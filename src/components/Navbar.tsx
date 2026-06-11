@@ -22,6 +22,7 @@ export default function Navbar() {
         <div className="hidden md:flex items-center gap-8">
           <Link href="/tool" className="text-gray-600 hover:text-violet-600 transition text-sm font-medium">Tool</Link>
           <Link href="/pricing" className="text-gray-600 hover:text-violet-600 transition text-sm font-medium">Pricing</Link>
+          <Link href="/blog" className="text-gray-600 hover:text-violet-600 transition text-sm font-medium">Blog</Link>
           <Link href="/#how-it-works" className="text-gray-600 hover:text-violet-600 transition text-sm font-medium">How It Works</Link>
         </div>
 
@@ -71,6 +72,7 @@ export default function Navbar() {
         <div className="md:hidden bg-white border-t border-gray-100 px-4 py-4 flex flex-col gap-3 shadow-lg">
           <Link href="/tool" onClick={() => setOpen(false)} className="text-gray-700 font-medium hover:text-violet-600 transition py-1">Tool</Link>
           <Link href="/pricing" onClick={() => setOpen(false)} className="text-gray-700 font-medium hover:text-violet-600 transition py-1">Pricing</Link>
+          <Link href="/blog" onClick={() => setOpen(false)} className="text-gray-700 font-medium hover:text-violet-600 transition py-1">Blog</Link>
           {session ? (
             <>
               <Link href="/dashboard" onClick={() => setOpen(false)} className="text-gray-700 font-medium hover:text-violet-600 transition py-1">
